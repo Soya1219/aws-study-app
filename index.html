@@ -3,28 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AWS Master v5 (Hybrid)</title>
+<title>AWS Master v5.1 (Fixed)</title>
 <style>
   /* --- デザイン定義 --- */
   :root { --primary: #232f3e; --secondary: #ff9900; --bg: #f2f3f3; --text: #232f3e; --correct: #1b5e20; --wrong: #b71c1c; --vocab: #00796b; }
   body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
   
-  /* --- 共通レイアウト --- */
   .app-container { max-width: 900px; margin: 0 auto; width: 100%; height: 100%; display: flex; flex-direction: column; background: white; position: relative; }
   .screen { display: none; flex: 1; flex-direction: column; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .screen.active { display: flex; animation: fadeIn 0.3s ease-out; }
   
-  /* ヘッダー */
   .app-header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
   .logo { font-weight: bold; font-size: 18px; display: flex; align-items: center; gap: 10px; }
   .logo span { color: var(--secondary); }
   .btn-quit { font-size: 12px; color: var(--primary); background: #fff; padding: 6px 14px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; }
 
-  /* --- ホーム画面 --- */
   .home-title { font-size: 22px; margin-bottom: 5px; text-align: center; color: var(--primary); }
   .home-subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
   
-  /* コースカード */
   .course-section-title { font-size: 15px; font-weight: bold; margin: 25px 0 10px; border-left: 5px solid var(--secondary); padding-left: 10px; display: flex; align-items: center; justify-content: space-between; }
   .course-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .course-card { 
@@ -34,7 +30,6 @@
   }
   .course-card:active { transform: scale(0.98); background: #fafafa; }
   
-  /* モード別スタイル */
   .sap-card { background: #232f3e; color: white; border: 2px solid #000; }
   .sap-card .course-desc { color: #ccc; }
   .vocab-card { background: #e0f2f1; border-color: var(--vocab); }
@@ -42,4 +37,367 @@
 
   .course-icon { font-size: 24px; margin-bottom: 6px; display: block; }
   .course-name { font-weight: bold; font-size: 14px; display: block; }
-  .course-desc { font-size: 11px; color:
+  .course-desc { font-size: 11px; color: #666; margin-top: 4px; display: block; }
+  
+  .progress-area { margin-bottom: 15px; }
+  .progress-bar-bg { width: 100%; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--secondary); width: 0%; transition: width 0.3s; }
+  .status-text { font-size: 12px; color: #555; display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold; }
+  
+  .question-box { 
+    font-size: 16px; line-height: 1.6; font-weight: 500; margin-bottom: 20px; 
+    padding: 20px; background: #f8f9fa; border-left: 5px solid var(--primary); border-radius: 6px; 
+    color: #333; box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+  }
+  .tag-badge { display: inline-block; background: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 10px; font-weight: bold; }
+  .tag-badge.sap { background: #212121; color: #ff9900; }
+  .tag-badge.vocab { background: var(--vocab); color: #fff; }
+
+  .option-btn { 
+    background: white; border: 1px solid #ccc; border-radius: 6px; padding: 15px; margin-bottom: 10px;
+    text-align: left; font-size: 14px; cursor: pointer; position: relative; line-height: 1.4;
+    transition: all 0.1s; color: #444;
+  }
+  .option-btn:active { background: #f0f0f0; }
+  .option-btn.correct { border: 2px solid var(--correct); background: #e8f5e9; color: var(--correct); font-weight: bold; }
+  .option-btn.wrong { border: 2px solid var(--wrong); background: #ffebee; opacity: 0.6; }
+
+  .feedback-box { margin-top: 10px; padding: 15px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 6px; display: none; margin-bottom: 80px; }
+  .feedback-title { font-weight: bold; color: var(--correct); margin-bottom: 10px; display: block; }
+  
+  .footer-area { 
+    position: sticky; bottom: 0; background: linear-gradient(to top, rgba(255,255,255,1) 90%, rgba(255,255,255,0)); 
+    padding: 15px 0 25px; text-align: center; margin-top: auto; 
+  }
+  .btn-next { 
+    background: var(--secondary); color: #000; border: none; padding: 14px 40px; 
+    border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2); min-width: 200px;
+  }
+  
+  .score-display { text-align: center; padding: 30px 0; }
+  .score-number { font-size: 48px; font-weight: bold; color: var(--primary); }
+  .score-msg { font-size: 18px; font-weight: bold; margin-top: 10px; color: var(--secondary); }
+  .review-list { margin-top: 20px; }
+  .review-item { border-bottom: 1px solid #eee; padding: 15px 0; }
+  .review-q { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; color: #555; }
+  .review-a { color: var(--correct); font-size: 14px; font-weight: bold; }
+
+  .resume-alert { background: #fff3e0; border: 1px solid #ffe0b2; color: #e65100; padding: 12px; border-radius: 6px; margin-bottom: 20px; text-align: center; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+  .hidden { display: none !important; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  @media (max-width: 600px) {
+    .app-container { max-width: 100%; border-radius: 0; }
+    .course-grid { grid-template-columns: 1fr; }
+    .course-card { flex-direction: row; justify-content: flex-start; text-align: left; padding: 15px; }
+    .course-icon { margin-bottom: 0; margin-right: 15px; }
+    .option-btn { font-size: 14px; padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <header class="app-header">
+    <div class="logo">AWS <span>Master</span></div>
+    <button id="quitBtn" class="btn-quit hidden" onclick="confirmQuit()">中断</button>
+  </header>
+
+  <div id="homeScreen" class="screen">
+    <div class="home-title">学習モード選択</div>
+    <p class="home-subtitle">基礎単語から実戦シナリオまで完全網羅</p>
+    
+    <div id="resumeArea" class="resume-alert hidden" onclick="resumeGame()">
+      🔄 前回の続きから再開する
+    </div>
+
+    <div class="course-section-title" style="border-color:var(--vocab); color:var(--vocab);">
+      Vocabulary (用語暗記)
+      <span style="font-size:11px; background:#e0f2f1; padding:2px 6px; border-radius:4px;">Previous Format</span>
+    </div>
+    <div class="course-grid">
+      <div class="course-card vocab-card" onclick="startCourse('vocab_endless')">
+        <span class="course-icon">📖</span>
+        <div><span class="course-name">単語帳 エンドレス</span><span class="course-desc">「問題文」→「サービス名」</span></div>
+      </div>
+    </div>
+
+    <div class="course-section-title">Scenario (SAA Practice)</div>
+    <div class="course-grid">
+      <div class="course-card" onclick="startCourse('saa_15')">
+        <span class="course-icon">⚡</span>
+        <div><span class="course-name">クイック 15問</span><span class="course-desc">ランダム出題</span></div>
+      </div>
+      <div class="course-card" onclick="startCourse('saa_30')">
+        <span class="course-icon">📝</span>
+        <div><span class="course-name">ハーフ模試 30問</span><span class="course-desc">実力確認用</span></div>
+      </div>
+      <div class="course-card" onclick="startCourse('saa_endless')">
+        <span class="course-icon">♾️</span>
+        <div><span class="course-name">シナリオ エンドレス</span><span class="course-desc">SAA全問無限ノック</span></div>
+      </div>
+    </div>
+
+    <div class="course-section-title" style="border-color:#000;">Expert (SAP Level)</div>
+    <div class="course-grid">
+      <div class="course-card sap-card" onclick="startCourse('sap')">
+        <span class="course-icon">🎓</span>
+        <div><span class="course-name">SAP エキスパート</span><span class="course-desc">高難度・複合シナリオ</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quizScreen" class="screen">
+    <div class="progress-area">
+      <div class="progress-bar-bg"><div id="progressBar" class="progress-bar-fill"></div></div>
+      <div class="status-text"><span id="qCount">Q.1</span><span id="scorePreview">正解: 0</span></div>
+    </div>
+    
+    <div id="quizContent">
+      <span id="levelBadge" class="tag-badge">SAA</span>
+      <div id="qText" class="question-box"></div>
+      <div id="optionsArea"></div>
+    </div>
+
+    <div id="feedbackArea" class="feedback-box">
+      <span class="feedback-title">✅ 正解 / 解説</span>
+      <div id="explanationText" style="font-size:14px; line-height:1.6;"></div>
+    </div>
+
+    <div class="footer-area">
+      <button id="nextBtn" class="btn-next hidden" onclick="nextQuestion()">次の問題へ</button>
+      <button id="finishBtn" class="btn-next hidden" style="background:#ddd;" onclick="finishQuiz()">結果を見る</button>
+    </div>
+  </div>
+
+  <div id="resultScreen" class="screen">
+    <div class="score-display">
+      <div style="font-size:14px; color:#666;">正解率</div>
+      <div id="finalScore" class="score-number">0%</div>
+      <div id="resultMsg" class="score-msg"></div>
+    </div>
+    
+    <div style="font-weight:bold; border-bottom:2px solid #ddd; padding-bottom:5px;">⚠️ 復習リスト</div>
+    <div id="reviewList" class="review-list"></div>
+
+    <div class="footer-area">
+      <button class="btn-next" onclick="goHome()">ホームに戻る</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Data Sources ---
+// 1. Vocabulary (67問)
+const vocabData=[{id:1,a:"EC2 Spot Instances",f:"最大90%OFF・中断リスクあり",q:"終了しても問題ないバッチ処理やステートレスなコンテナ処理。コストを最小化したい。"},{id:2,a:"S3 Intelligent-Tiering",f:"頻度に応じて料金クラス自動移動",q:"アクセスパターンが予測不能なデータのコスト最適化。モニタリング料金なし。"},{id:3,a:"Aurora Serverless v2",f:"負荷に応じて瞬時に自動スケール",q:"予測不能なスパイクが発生するDBワークロード。容量管理不要。"},{id:4,a:"AWS Global Accelerator",f:"静的IP提供・AWS回線で高速化",q:"世界中のユーザーに対してUDPゲームやVoIPの遅延を減らしたい。"},{id:5,a:"AWS WAF",f:"L7防御・SQLインジェクション対策",q:"WebサイトへのXSSやSQLインジェクション攻撃を防ぎたい。"},{id:6,a:"Amazon SQS",f:"完全マネージド・システムの疎結合化",q:"ピーク時にDBがダウンしても注文データを失わないようにしたい。疎結合化。"},{id:7,a:"AWS Organizations + SCP",f:"マルチアカウント管理・禁止権限の一括適用",q:"100個のアカウントで特定のリージョン使用を一律禁止したい。"},{id:8,a:"FSx for Windows File Server",f:"Windowsネイティブ共有・AD連携",q:"Windows EC2間でSMB共有フォルダを利用したい。AD認証必須。"},{id:9,a:"Amazon RDS Proxy",f:"DB接続プール・Lambda枯渇対策",q:"Lambdaからの大量同時アクセスでRDSが接続エラーになる。"},{id:10,a:"VPC Gateway Endpoint",f:"S3/DynamoDBへの閉域接続・無料",q:"VPCからインターネットに出ずにS3へ大量データを送りたい。"},{id:11,a:"AWS Fargate",f:"サーバーレスコンテナ・管理不要",q:"コンテナを動かしたいがOSパッチやサーバー管理をしたくない。"},{id:12,a:"S3 Object Lock (Compliance)",f:"WORM機能・ルートでも削除不可",q:"法規制によりデータを7年間絶対に削除・変更できないようにしたい。"},{id:13,a:"AWS Shield Advanced",f:"DDoS保護・コスト保険",q:"大規模なDDoS攻撃から保護し、攻撃によるスケーリング費用を免除したい。"},{id:14,a:"DynamoDB (On-Demand)",f:"NoSQL・スパイク対応・管理不要",q:"アクセス数が全く読めないキャンペーンサイトのDB。容量設計不要。"},{id:15,a:"CloudFront + S3 (OAC)",f:"静的サイト配信・オリジン保護",q:"S3のWebサイトを高速配信しつつ、S3への直接アクセスを禁止したい。"},{id:16,a:"Amazon EventBridge",f:"イベント駆動・SaaS連携",q:"「ファイルがアップロードされたら」などのイベントで別サービスを起動したい。"},{id:17,a:"Lambda + API Gateway",f:"サーバーレスAPI・スケーリング",q:"サーバー管理なしでREST APIを構築し、リクエスト時のみ課金したい。"},{id:18,a:"AWS Secrets Manager",f:"認証情報の自動ローテーション",q:"DBのパスワードを定期的に自動変更し、コードに埋め込みたくない。"},{id:19,a:"Amazon EFS",f:"Linux共有・自動拡張",q:"複数のLinux EC2でWebコンテンツ置き場を共有したい。"},{id:20,a:"Amazon ElastiCache",f:"インメモリキャッシュ・ミリ秒以下",q:"頻繁にアクセスされる商品データのDB読み込み負荷を下げたい。"},{id:21,a:"AWS Direct Connect",f:"専用線接続・安定通信",q:"オンプレミスとAWSを安定した帯域と低遅延で接続したい。"},{id:22,a:"EC2 Auto Scaling",f:"需要に応じた台数増減",q:"Webサーバーの負荷に応じて自動で台数を増やしたい。"},{id:23,a:"AWS Cost Explorer",f:"コスト分析・予実管理",q:"過去の利用料を分析し、将来のコストを予測したい。"},{id:24,a:"S3 Glacier Deep Archive",f:"最安保管・取り出し12時間以上",q:"ログデータを7年間保存するが、取り出すことはほぼない。"},{id:25,a:"Amazon Redshift",f:"DWH・列指向・ビッグデータ分析",q:"ペタバイト級のデータを高速に集計・分析したい。"},{id:26,a:"AWS KMS",f:"暗号化キー管理",q:"EBSやS3のデータを暗号化し、キーの使用履歴を監査したい。"},{id:27,a:"Route 53 (Failover)",f:"DNSフェイルオーバー",q:"メインサイトがダウンしたら自動でSorryページ（S3）に切り替えたい。"},{id:28,a:"Step Functions",f:"ワークフロー管理・可視化",q:"LambdaやFargateなど複数の処理を順序通りに実行・分岐させたい。"},{id:29,a:"Placement Group (Cluster)",f:"低遅延・高スループット",q:"HPC（ハイパフォーマンス）計算のためにEC2間の通信速度を最大化したい。"},{id:30,a:"AWS Storage Gateway (File)",f:"オンプレからのS3アクセス(NFS/SMB)",q:"オンプレミスのサーバーからNFSでS3にファイルを保存したい。"},{id:31,a:"DynamoDB Global Tables",f:"マルチリージョン・完全同期",q:"世界中のユーザーに対し、ローカルのレイテンシでDB書き込みを提供したい。"},{id:32,a:"IAM Access Analyzer",f:"外部共有の検知",q:"S3バケットが意図せず外部公開されていないかチェックしたい。"},{id:33,a:"Transit Gateway",f:"VPC間接続のハブ・一元管理",q:"数十個のVPCとオンプレミスを相互に接続したい。ハブアンドスポーク。"},{id:34,a:"Amazon Kinesis Data Streams",f:"リアルタイムデータ収集",q:"IoTデバイスからの大量のログデータをリアルタイムで収集・処理したい。"},{id:35,a:"AWS Trusted Advisor",f:"ベストプラクティス自動チェック",q:"セキュリティ設定やコスト削減の推奨事項を知りたい。"},{id:36,a:"AWS Batch",f:"バッチ処理の最適化・スポット活用",q:"数千件のバッチジョブを効率よく、スポットインスタンスを使って処理したい。"},{id:37,a:"EBS Multi-Attach",f:"複数EC2からの同時接続",q:"クラスタ化されたDBのために1つのEBSを複数のEC2で共有したい。"},{id:38,a:"Aurora Global Database",f:"DR対策・高速クロスリージョン複製",q:"リージョン規模の災害時に、1秒未満で別リージョンへ切り替えたい。"},{id:39,a:"VPC Flow Logs",f:"ENI通信ログ・トラブルシュート",q:"セキュリティグループで拒否された通信や、通信内容（メタデータ）を調査したい。"},{id:40,a:"Amazon GuardDuty",f:"脅威検知・機械学習",q:"AWS環境に対する不審な通信やマイニング行為を検知したい。"},{id:41,a:"Amazon SNS",f:"プッシュ通知・ファンアウト",q:"1つのメッセージをメール、Lambda、SQSなど複数箇所に同時に送りたい。"},{id:42,a:"AWS Config",f:"構成変更履歴・コンプライアンス",q:"「誰がいつセキュリティグループを変更したか」を追跡したい。"},{id:43,a:"User Data",f:"起動時スクリプト",q:"EC2起動時にApacheのインストールとWebページのダウンロードを自動化したい。"},{id:44,a:"S3 Lifecycle Policy",f:"自動削除・クラス移動",q:"作成から30日後にGlacierへ移動し、1年後に削除したい。"},{id:45,a:"DynamoDB Streams",f:"DB変更トリガー",q:"DBにデータが追加されたら、即座にLambdaを起動して加工したい。"},{id:46,a:"Route 53 (Geolocation)",f:"地理的ルーティング",q:"ユーザーの国に合わせて、日本語版または英語版のサーバーに誘導したい。"},{id:47,a:"Amazon Cognito",f:"認証・認可・SSO",q:"WebアプリにFacebookログインやユーザー登録機能を追加したい。"},{id:48,a:"AWS AppSync",f:"GraphQL・リアルタイム更新",q:"モバイルアプリでオフラインデータの同期や、必要なデータのみを取得したい。"},{id:49,a:"Systems Manager Session Manager",f:"SSH不要・ブラウザ接続",q:"SSHポート(22)を開けずに、安全にEC2インスタンスへ接続したい。"},{id:50,a:"AWS Backup (Cross-Region)",f:"バックアップ一元管理・遠隔地コピー",q:"コンプライアンス要件でEC2/RDSのバックアップを別リージョンに保管したい。"},{id:51,a:"EC2 IAM Role for SSM",f:"EC2からの安全なアクセス",q:"EC2からDBパスワード(暗号化)を取得したいが、コードにキーを書きたくない。"},{id:52,a:"WAF + Shield + NLB",f:"多層防御・DDoS対策",q:"API基盤に対し、DDoS攻撃とSQLインジェクションの両方を防ぎたい。"},{id:53,a:"Microservices Decoupling (SQS)",f:"疎結合・バッファリング",q:"受信側システムがメンテナンス中でも送信側がエラーにならないようにしたい。"},{id:54,a:"RDS Multi-AZ",f:"高可用性・自動フェイルオーバー",q:"本番DBの障害時に、IP変更なしで自動的に予備機へ切り替えたい。"},{id:55,a:"Serverless Web App",f:"S3+Lambda+DDB・管理ゼロ",q:"インフラ管理を一切せず、アクセス数に応じて勝手にスケールするWebアプリ。"},{id:56,a:"Security Group for Direct Connect",f:"オンプレからの通信制御",q:"Direct Connect経由のオンプレミスIPからのみ、特定のEC2へのアクセスを許可したい。"},{id:57,a:"ECS Task Role",f:"タスク単位の権限管理",q:"ECS上のコンテナAはS3可、コンテナBは不可、と権限を分けたい。"},{id:58,a:"FSx for Windows File Server",f:"Windows共有・AD統合",q:"Windowsサーバー群で共有ファイルシステムを使い、ADの権限設定を維持したい。"},{id:59,a:"Fargate + RDS Multi-AZ",f:"コンテナ×DBの管理レスHA",q:"コンテナとDBの可用性を高めたいが、OS管理やパッチ当てはしたくない。"},{id:60,a:"AWS Transfer Family",f:"SFTPのS3化・サーバーレス",q:"取引先がSFTPでのファイル送信を求めているが、サーバー管理はしたくない。"},{id:61,a:"S3 Object Lock Compliance",f:"法的保存・完全削除不可",q:"監査データを7年間、ルートユーザーを含め誰にも削除させない。"},{id:62,a:"Elastic Beanstalk (Blue/Green)",f:"PaaS・ダウンタイムなしデプロイ",q:"インフラ管理なしでWebアプリを公開し、無停止で新版へ切り替えたい。"},{id:63,a:"Aurora Read Replica",f:"読み取り負荷分離",q:"分析クエリのせいで、ECサイトの注文処理（書き込み）が遅くなっている。"},{id:64,a:"Textract + Athena",f:"サーバーレスOCR・分析",q:"大量の書類をスキャンし、中身の文字データをSQLで分析したい。"},{id:65,a:"RDS Read Replica vs ElastiCache",f:"読み取り分散 vs キャッシュ",q:"「複雑な検索クエリ」によるDB負荷を下げたい。"},{id:66,a:"Multi-AZ vs Multi-Region",f:"高可用性 vs 災害対策(DR)",q:"データセンター障害に耐えられれば良い（高可用性）要件への対応。"},{id:67,a:"SQS (Buffering)",f:"耐障害性・スパイク吸収",q:"ECサイトで注文が殺到しても、システムをダウンさせず処理したい。"}];
+
+// 2. SAA Scenario
+const saaData=[{id:"saa_1",a:"EC2 Spot Instances を使用して、ECSクラスターまたはEKSノードグループを構成する。",q:"あるスタートアップ企業は、画像処理を行うバッチアプリケーションをコンテナ化してAWS上で実行する計画を立てています。この処理はステートレスであり、いつでも中断して再開することが可能です。最もコスト効率の高いコンピューティングオプションはどれですか？",t:"コスト最適化"},{id:"saa_2",a:"S3 Object Lock を「コンプライアンスモード」で有効にし、保持期間を7年に設定する。",q:"企業のコンプライアンス要件により、特定の契約書データを7年間保存する必要があります。この期間中、ルートユーザーを含むいかなるユーザーもデータを削除または上書きしてはいけません。どのS3機能を使用すべきですか？",t:"データ保護"},{id:"saa_3",a:"Amazon Aurora Serverless v2 を使用して、アプリケーションの需要に応じてデータベース容量を自動的にスケーリングさせる。",q:"ECサイトを運営する企業は、予測不能なトラフィックの急増（スパイク）に直面しています。データベース層にはリレーショナルデータベースが必要ですが、事前の容量計画が難しく、アイドル時間のコストを削減したいと考えています。最適なソリューションは？",t:"スケーリング"},{id:"saa_4",a:"AWS Global Accelerator を使用して、ユーザーのトラフィックを最も近いエッジロケーションからAWSグローバルネットワーク経由でルーティングする。",q:"グローバルに展開するゲーム会社は、世界中のユーザーに対してUDPベースのオンラインゲームを提供しています。ネットワークの遅延とジッターを最小限に抑え、安定した接続を提供するための最適なアーキテクチャはどれですか？",t:"ネットワーク高速化"},{id:"saa_5",a:"Amazon FSx for Windows File Server をデプロイし、AWS Directory Service または自己管理型ADと統合する。",q:"ある企業は、オンプレミスのデータセンターとAWS VPCを接続し、社内のWindowsファイルサーバーにあるデータをAWS上のWindowsインスタンスと共有したいと考えています。既存のActive Directory認証を利用する必要があります。推奨されるストレージサービスは？",t:"Windows移行"},{id:"saa_6",a:"Amazon SQS を導入して注文リクエストをキューイングし、バックエンドワーカーが処理可能なペースでメッセージをポーリングする構成にする。",q:"Eコマースアプリケーションにおいて、注文処理システムのバックエンドデータベースが一時的に利用不可になった場合でも、顧客からの注文データを絶対に消失しないようにする必要があります。アプリケーションを疎結合にするための最適な設計は？",t:"疎結合・耐障害性"},{id:"saa_7",a:"AWS Organizations の SCP (Service Control Policy) を使用して、対象のOU（組織単位）に対してリージョン制限ポリシーを一括適用する。",q:"大規模な組織が100以上のAWSアカウントを運用しています。セキュリティチームは、特定のアカウントを除き、すべての未承認リージョンでのリソース作成を禁止したいと考えています。運用負荷を最小限に抑える方法は？",t:"ガバナンス"},{id:"saa_8",a:"Amazon RDS Proxy をデプロイしてデータベース接続をプールし、多数のLambda関数からの接続を効率的に多重化する。",q:"Lambda関数を使用してRDSデータベースにアクセスするアプリケーションがあります。トラフィックのピーク時に、Lambdaが大量に同時実行され、RDSの最大接続数を超過してエラーが発生しています。コードを変更せずに解決するには？",t:"サーバーレスDB接続"},{id:"saa_9",a:"VPC Gateway Endpoint (S3用) を作成し、ルートテーブルを設定してS3へのトラフィックをAWSネットワーク内でルーティングする。",q:"セキュリティ要件の厳しい企業が、プライベートサブネット内のEC2インスタンスからS3バケットへ大量のデータを転送する必要があります。データはインターネットを経由してはならず、コストを最小限に抑える必要があります。",t:"VPCネットワーキング"},{id:"saa_10",a:"AWS WAF (Web Application Firewall) を作成し、適切なWeb ACLルールを設定してALBおよびCloudFrontに関連付ける。",q:"WebアプリケーションへのSQLインジェクションやクロスサイトスクリプティング（XSS）攻撃を防ぐ必要があります。この防御策は、ALB（Application Load Balancer）およびCloudFrontディストリビューションの両方に適用可能である必要があります。",t:"Webセキュリティ"}];
+
+// 3. SAP Scenario
+const sapData=[{id:"sap_1",a:"AWS Transit Gateway を使用してハブアンドスポーク構成を作成し、各リージョン間をピアリング接続する。",q:"グローバル企業が50以上のVPCとオンプレミス環境を相互接続する必要があります。フルメッシュのVPN接続は管理が困難になっています。ネットワーク構成を簡素化し、一元管理するための推奨アーキテクチャは？",t:"高度なネットワーキング"},{id:"sap_2",a:"ログ専用のAWSアカウントを作成し、Organization Trailを使用して全アカウントのログをS3バケットに集約する。S3 Object Lockで改ざんを防止する。",q:"セキュリティ監査のため、組織内のすべてのAWSアカウントのCloudTrailログとConfigログを一箇所に集約し、誰も変更できない状態で保存する必要があります。ベストプラクティスは？",t:"マルチアカウントセキュリティ"},{id:"sap_3",a:"Direct Connect リンク上で MACsec 暗号化を使用する。",q:"オンプレミスとAWS間を10GbpsのDirect Connectで接続しています。コンプライアンス要件によりデータは暗号化される必要がありますが、IPsec VPNでは帯域幅のオーバーヘッドが許容できません。物理層での暗号化を実現するには？",t:"Direct Connect"},{id:"sap_4",a:"BYOIP (Bring Your Own IP) を使用して、自社のパブリックIPアドレス範囲をAWSに持ち込む。",q:"レガシーアプリケーションをAWSに移行中ですが、クライアント側のファイアウォール設定により、接続先IPアドレスを変更することができません。AWSでもオンプレミスと同じパブリックIPを使用し続けるには？",t:"移行・IP管理"},{id:"sap_5",a:"Amazon Aurora Global Database を使用し、書き込み転送（Write Forwarding）機能を有効にする。",q:"グローバルに展開するアプリケーションで、各リージョンのユーザーに低遅延な読み取りを提供しつつ、セカンダリリージョンからの書き込みも可能にしたいと考えています。アプリケーションの改修を最小限にするDB構成は？",t:"グローバルDB"}];
+
+// --- ダミーデータ生成 ---
+const extendedSaaData = [];
+for(let i=0; i<10; i++) {
+    saaData.forEach((item, index) => {
+        extendedSaaData.push({ id: `saa_gen_${i}_${index}`, q: item.q, a: item.a, t: item.t });
+    });
+}
+
+// -----------------------------------------
+// App Logic
+// -----------------------------------------
+const SESSION_KEY = 'aws_exam_session';
+let appState = { mode: '', questions: [], currentIndex: 0, correctCount: 0, wrongList: [] };
+
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        checkSession();
+        // 初期表示でホーム画面を強制的に出す（ホワイトスクリーン対策）
+        document.getElementById('homeScreen').classList.add('active');
+    } catch(e) {
+        console.error(e);
+        localStorage.clear();
+        document.getElementById('homeScreen').classList.add('active');
+    }
+});
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const quitBtn = document.getElementById('quitBtn');
+    if (id === 'quizScreen') quitBtn.classList.remove('hidden'); else quitBtn.classList.add('hidden');
+}
+function goHome() { checkSession(); showScreen('homeScreen'); }
+
+function startCourse(mode) {
+    localStorage.removeItem(SESSION_KEY);
+    appState.mode = mode;
+    appState.currentIndex = 0;
+    appState.correctCount = 0;
+    appState.wrongList = [];
+
+    let pool = [];
+    if (mode === 'vocab_endless') {
+        pool = shuffle([...vocabData]);
+    } else if (mode.startsWith('saa')) {
+        pool = shuffle([...extendedSaaData]);
+        if (mode === 'saa_15') pool = pool.slice(0, 15);
+        if (mode === 'saa_30') pool = pool.slice(0, 30);
+    } else if (mode === 'sap') {
+        pool = shuffle([...sapData]);
+    }
+    appState.questions = pool;
+    showScreen('quizScreen');
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const q = appState.questions[appState.currentIndex];
+    const total = appState.questions.length;
+    const current = appState.currentIndex + 1;
+    const isEndless = appState.mode.includes('endless');
+    
+    document.getElementById('qCount').innerText = `Q.${current} / ${isEndless ? '∞' : total}`;
+    document.getElementById('scorePreview').innerText = `正解: ${appState.correctCount}`;
+    const pct = isEndless ? 100 : (current / total) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+
+    const badge = document.getElementById('levelBadge');
+    if(appState.mode === 'vocab_endless') {
+        badge.innerText = 'Vocabulary'; badge.className = 'tag-badge vocab';
+        document.getElementById('qText').innerText = q.q;
+    } else if(appState.mode === 'sap') {
+        badge.innerText = 'SAP Expert'; badge.className = 'tag-badge sap';
+        document.getElementById('qText').innerText = q.q;
+    } else {
+        badge.innerText = 'SAA Scenario'; badge.className = 'tag-badge';
+        document.getElementById('qText').innerText = q.q;
+    }
+
+    const optionsArea = document.getElementById('optionsArea');
+    optionsArea.innerHTML = '';
+    
+    let options = [{ text: q.a, isCorrect: true }];
+    let distractorPool;
+    if(appState.mode === 'vocab_endless') distractorPool = vocabData;
+    else if(appState.mode === 'sap') distractorPool = sapData;
+    else distractorPool = extendedSaaData;
+
+    let distractors = distractorPool.filter(d => d.id !== q.id);
+    distractors = shuffle(distractors).slice(0, 3);
+    distractors.forEach(d => options.push({ text: d.a, isCorrect: false }));
+
+    shuffle(options).forEach((opt, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.innerHTML = `<span style="font-weight:bold; margin-right:8px;">${String.fromCharCode(65+idx)}.</span> ${opt.text}`;
+        btn.onclick = () => checkAnswer(btn, opt, q);
+        optionsArea.appendChild(btn);
+    });
+
+    document.getElementById('feedbackArea').style.display = 'none';
+    document.getElementById('nextBtn').classList.add('hidden');
+    document.getElementById('finishBtn').classList.add('hidden');
+}
+
+function checkAnswer(btn, option, qData) {
+    if (document.querySelector('.option-btn.correct') || document.querySelector('.option-btn.wrong')) return;
+    const feedback = document.getElementById('feedbackArea');
+    const explanation = document.getElementById('explanationText');
+    const allBtns = document.querySelectorAll('.option-btn');
+    allBtns.forEach(b => { if (b.innerText.includes(qData.a)) b.classList.add('correct'); });
+
+    if (option.isCorrect) {
+        appState.correctCount++;
+        feedback.style.background = "#e8f5e9";
+        feedback.querySelector('.feedback-title').innerText = "✅ 正解";
+        feedback.querySelector('.feedback-title').style.color = "#1b5e20";
+    } else {
+        btn.classList.add('wrong');
+        appState.wrongList.push(qData);
+        feedback.style.background = "#ffebee";
+        feedback.querySelector('.feedback-title').innerText = "❌ 不正解";
+        feedback.querySelector('.feedback-title').style.color = "#b71c1c";
+    }
+
+    if(appState.mode === 'vocab_endless') {
+        explanation.innerHTML = `<strong>正解:</strong> ${qData.a}<br><span style="font-size:12px; color:#555;">💡 特徴: ${qData.f}</span>`;
+    } else {
+        explanation.innerHTML = `<strong>ソリューション:</strong><br>${qData.a}<br><br><span style="font-size:12px; color:#555;">💡 ポイント: ${qData.t}</span>`;
+    }
+
+    feedback.style.display = 'block';
+    feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    saveSession();
+
+    if (appState.mode.includes('endless')) {
+        document.getElementById('nextBtn').classList.remove('hidden');
+    } else {
+        if (appState.currentIndex < appState.questions.length - 1) {
+            document.getElementById('nextBtn').classList.remove('hidden');
+        } else {
+            document.getElementById('finishBtn').classList.remove('hidden');
+        }
+    }
+}
+
+function nextQuestion() {
+    appState.currentIndex++;
+    if (appState.mode.includes('endless') && appState.currentIndex >= appState.questions.length) {
+        appState.questions = shuffle(appState.questions);
+        appState.currentIndex = 0;
+    }
+    renderQuestion();
+}
+
+function finishQuiz() {
+    localStorage.removeItem(SESSION_KEY);
+    showScreen('resultScreen');
+    const total = appState.currentIndex + 1;
+    const score = Math.round((appState.correctCount / total) * 100);
+    document.getElementById('finalScore').innerText = `${score}%`;
+    let msg = "";
+    if (score >= 90) msg = "素晴らしい！ プロフェッショナルレベルです！";
+    else if (score >= 70) msg = "合格圏内です。この調子！";
+    else msg = "あと少し！復習して知識を固めましょう。";
+    document.getElementById('resultMsg').innerText = msg;
+
+    const list = document.getElementById('reviewList');
+    list.innerHTML = '';
+    if (appState.wrongList.length === 0) {
+        list.innerHTML = '<div style="padding:20px; text-align:center; color:#2e7d32;">全問正解です！</div>';
+    } else {
+        appState.wrongList.forEach(q => {
+            const item = document.createElement('div');
+            item.className = 'review-item';
+            item.innerHTML = `<span class="review-q">Q. ${q.q}</span><span class="review-a">✅ ${q.a}</span>`;
+            list.appendChild(item);
+        });
+    }
+}
+
+function confirmQuit() { if(confirm("中断して結果を見ますか？")) finishQuiz(); }
+function saveSession() { localStorage.setItem(SESSION_KEY, JSON.stringify(appState)); }
+function checkSession() {
+    try {
+        const data = localStorage.getItem(SESSION_KEY);
+        const area = document.getElementById('resumeArea');
+        if (data) {
+            const s = JSON.parse(data);
+            area.innerHTML = `🔄 <strong>前回の続きから再開</strong> (Q.${s.currentIndex+1})`;
+            area.classList.remove('hidden');
+        } else { area.classList.add('hidden'); }
+    } catch(e) { localStorage.clear(); }
+}
+function resumeGame() {
+    const data = localStorage.getItem(SESSION_KEY);
+    if (data) { appState = JSON.parse(data); showScreen('quizScreen'); renderQuestion(); }
+}
+function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
+</script>
+</body>
+</html>
