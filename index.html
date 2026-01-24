@@ -3,391 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AWS Master Locked</title>
+<title>AWS Master v5 (Hybrid)</title>
 <style>
-  /* --- 基本スタイル (前回と同じ) --- */
-  :root { --primary: #7b1fa2; --bg: #f0f2f5; --text: #333; --correct: #2e7d32; --wrong: #c62828; --accent: #ff9800; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-  .app-container { max-width: 800px; margin: 0 auto; width: 100%; height: 100%; display: flex; flex-direction: column; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.05); position: relative; }
+  /* --- デザイン定義 --- */
+  :root { --primary: #232f3e; --secondary: #ff9900; --bg: #f2f3f3; --text: #232f3e; --correct: #1b5e20; --wrong: #b71c1c; --vocab: #00796b; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  
+  /* --- 共通レイアウト --- */
+  .app-container { max-width: 900px; margin: 0 auto; width: 100%; height: 100%; display: flex; flex-direction: column; background: white; position: relative; }
   .screen { display: none; flex: 1; flex-direction: column; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .screen.active { display: flex; animation: fadeIn 0.3s ease-out; }
-  .app-header { background: white; padding: 12px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; }
-  .logo { font-weight: bold; font-size: 18px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-  .btn-quit { font-size: 12px; color: #666; background: #f5f5f5; padding: 8px 16px; border-radius: 20px; cursor: pointer; border: none; font-weight: bold; }
-  .home-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-  .home-title { font-size: clamp(20px, 5vw, 28px); margin-bottom: 10px; text-align: center; }
-  .home-subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
-  .course-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding-bottom: 20px; }
-  .course-card { background: #fff; border: 2px solid #e0e0e0; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 110px; user-select: none; }
-  .course-card:active { transform: scale(0.96); background: #fafafa; }
-  .course-icon { font-size: 32px; margin-bottom: 8px; }
-  .course-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
-  .course-desc { font-size: 11px; color: #888; line-height: 1.4; }
-  .progress-header { margin-bottom: 15px; flex-shrink: 0; }
-  .progress-bar-bg { width: 100%; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
-  .progress-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
-  .stats-row { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; color: #666; font-weight: bold; }
-  .genre-tag { display: inline-block; background: #ede7f6; color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 10px; }
-  .question-box { font-size: clamp(16px, 4vw, 19px); line-height: 1.6; font-weight: 600; margin-bottom: 20px; padding: 15px; background: #fafafa; border-left: 5px solid var(--primary); border-radius: 8px; }
-  .option-btn { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px; margin-bottom: 12px; text-align: left; font-size: 15px; cursor: pointer; position: relative; transition: all 0.1s; line-height: 1.4; user-select: none; -webkit-tap-highlight-color: transparent; }
-  .option-btn:active { transform: scale(0.98); background: #f5f5f5; border-color: #ccc; }
-  .option-btn.correct { border-color: var(--correct); background: #e8f5e9; color: #1b5e20; font-weight: bold; }
-  .option-btn.wrong { border-color: var(--wrong); background: #ffebee; opacity: 0.7; }
-  .feedback-box { margin-top: 15px; padding: 15px; background: #f1f8e9; border-radius: 12px; border: 1px solid #c8e6c9; display: none; animation: slideUp 0.3s; margin-bottom: 80px; }
-  .feedback-title { font-weight: bold; color: var(--correct); display: block; margin-bottom: 8px; font-size: 16px; }
-  .quiz-footer { margin-top: auto; padding: 15px 0 0 0; text-align: center; position: sticky; bottom: 0; background: linear-gradient(to top, white 80%, rgba(255,255,255,0)); padding-bottom: 20px; }
-  .btn-primary { background: var(--primary); color: white; border: none; padding: 16px 0; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(123, 31, 162, 0.3); width: 100%; max-width: 400px; transition: transform 0.1s; }
-  .btn-primary:active { transform: scale(0.97); }
-  .result-header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
-  .score-circle { width: 130px; height: 130px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; margin: 0 auto 15px; box-shadow: 0 8px 20px rgba(123, 31, 162, 0.3); }
-  .graph-container { margin-bottom: 30px; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #eee; }
-  .graph-bar-bg { height: 24px; background: #f5f5f5; border-radius: 12px; overflow: hidden; position: relative; margin-top: 5px; }
-  .graph-bar-fill { height: 100%; background: linear-gradient(90deg, #7b1fa2, #ab47bc); width: 0%; transition: width 1s ease-out; }
-  .graph-text { position: absolute; width: 100%; text-align: center; top: 0; line-height: 24px; font-size: 12px; color: white; font-weight: bold; text-shadow: 0 0 2px rgba(0,0,0,0.5); }
-  .review-item { background: #fff; border: 1px solid #ffcdd2; border-left: 5px solid var(--wrong); padding: 15px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  .hidden { display: none !important; }
-  @media (max-width: 600px) { .app-container { border-radius: 0; max-width: 100%; } .course-grid { grid-template-columns: 1fr; gap: 12px; } .course-card { flex-direction: row; justify-content: flex-start; text-align: left; min-height: 80px; padding: 15px 20px; } .course-icon { margin-bottom: 0; margin-right: 15px; font-size: 28px; } .question-box { font-size: 16px; padding: 12px; } .option-btn { font-size: 14px; padding: 14px; } .screen { padding: 15px; } .app-header { padding: 10px 15px; } }
-
-  /* --- 🔒 ロック画面用の追加スタイル --- */
-  #lockOverlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #f8f9fa; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 20px; box-sizing: border-box;
-  }
-  .lock-box {
-    background: white; padding: 40px 30px; border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 320px;
-    text-align: center;
-  }
-  .lock-icon { font-size: 50px; margin-bottom: 20px; display: block; }
-  .lock-input {
-    width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd;
-    border-radius: 12px; margin-bottom: 20px; text-align: center; box-sizing: border-box;
-    outline: none; transition: 0.2s;
-  }
-  .lock-input:focus { border-color: var(--primary); }
-  .lock-btn {
-    width: 100%; padding: 15px; background: var(--primary); color: white;
-    border: none; border-radius: 30px; font-weight: bold; font-size: 16px; cursor: pointer;
-  }
-  .lock-error { color: var(--wrong); font-size: 14px; margin-top: 15px; display: none; }
-</style>
-</head>
-<body>
-
-<div id="lockOverlay">
-  <div class="lock-box">
-    <div class="lock-icon">🔒</div>
-    <h2 style="margin:0 0 20px 0; color:#333;">Enter Password</h2>
-    <input type="password" id="passInput" class="lock-input" placeholder="Passcode" maxlength="8">
-    <button class="lock-btn" onclick="checkPass()">Unlock</button>
-    <div id="lockError" class="lock-error">Passcode is incorrect</div>
-  </div>
-</div>
-
-<div class="app-container">
   
-  <header class="app-header">
-    <div class="logo">☁️ AWS Master</div>
-    <button id="quitBtn" class="btn-quit hidden" onclick="confirmQuit()">中断</button>
-  </header>
+  /* ヘッダー */
+  .app-header { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+  .logo { font-weight: bold; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+  .logo span { color: var(--secondary); }
+  .btn-quit { font-size: 12px; color: var(--primary); background: #fff; padding: 6px 14px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; }
 
-  <div id="homeScreen" class="screen active">
-    <div class="home-content">
-      <h1 class="home-title">学習コースを選択</h1>
-      <p class="home-subtitle">全67項目のAWSナレッジを習得しよう</p>
-      
-      <div class="course-grid">
-        <div class="course-card" onclick="startCourse('short')">
-          <div class="course-icon">⚡</div>
-          <div><div class="course-name">15問 サクッと</div><div class="course-desc">隙間時間に最適</div></div>
-        </div>
-        <div class="course-card" onclick="startCourse('mock')">
-          <div class="course-icon">📝</div>
-          <div><div class="course-name">模擬試験</div><div class="course-desc">ランダム30問</div></div>
-        </div>
-        <div class="course-card" onclick="startCourse('all')">
-          <div class="course-icon">📚</div>
-          <div><div class="course-name">全問制覇</div><div class="course-desc">全67問に挑戦</div></div>
-        </div>
-        <div class="course-card" style="border-color:var(--accent);" onclick="startCourse('endless')">
-          <div class="course-icon">♾️</div>
-          <div><div class="course-name">エンドレス</div><div class="course-desc">無限に出題</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="quizScreen" class="screen">
-    <div class="progress-header">
-      <div class="progress-bar-bg"><div id="progressBar" class="progress-bar-fill"></div></div>
-      <div class="stats-row"><span id="questionCount">Q. 1</span><span id="scorePreview">Score: 0</span></div>
-    </div>
-    <div id="quizContent">
-      <span id="genreTag" class="genre-tag">Genre</span>
-      <div id="questionText" class="question-box"></div>
-      <div id="optionsList"></div>
-    </div>
-    <div id="feedbackArea" class="feedback-box">
-      <span class="feedback-title"></span>
-      <div id="feedbackDetail" style="font-size:14px; line-height:1.6;"></div>
-    </div>
-    <div class="quiz-footer">
-      <button id="nextBtn" class="btn-primary hidden" onclick="nextQuestion()">次の問題へ</button>
-      <button id="finishBtn" class="btn-primary hidden" style="background:var(--wrong);" onclick="finishQuiz()">結果を見る</button>
-    </div>
-  </div>
-
-  <div id="resultScreen" class="screen">
-    <div class="result-header">
-      <div class="score-circle"><span id="finalScore">0</span><span style="font-size:16px;">%</span></div>
-      <h2 id="resultMessage">Result</h2>
-    </div>
-    <div class="graph-container">
-      <div style="margin-bottom:5px; font-size:12px; color:#666;">正解率</div>
-      <div class="graph-bar-bg"><div id="resultGraph" class="graph-bar-fill"></div><div id="resultGraphText" class="graph-text"></div></div>
-    </div>
-    <div id="reviewSection" class="review-section hidden">
-      <div style="font-size:18px; font-weight:bold; margin-bottom:15px;">⚠️ 間違えた問題</div>
-      <div id="reviewList"></div>
-    </div>
-    <div class="quiz-footer" style="background:none;">
-      <button class="btn-primary" onclick="goHome()">ホームに戻る</button>
-    </div>
-  </div>
-
-</div>
-
-<script>
-// ▼▼▼ パスワード設定エリア ▼▼▼
-// 好きなパスワードに変更してください
-const APP_PASSWORD = "1234";
-
-function checkPass() {
-  const input = document.getElementById('passInput').value;
-  const errorMsg = document.getElementById('lockError');
+  /* --- ホーム画面 --- */
+  .home-title { font-size: 22px; margin-bottom: 5px; text-align: center; color: var(--primary); }
+  .home-subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 13px; }
   
-  if (input === APP_PASSWORD) {
-    // 正解: ロック画面を消す
-    document.getElementById('lockOverlay').style.display = 'none';
-  } else {
-    // 不正解
-    errorMsg.style.display = 'block';
-    // ブルブル震えるアニメーション
-    const box = document.querySelector('.lock-box');
-    box.animate([
-      { transform: 'translateX(0)' },
-      { transform: 'translateX(-10px)' },
-      { transform: 'translateX(10px)' },
-      { transform: 'translateX(0)' }
-    ], { duration: 200 });
+  /* コースカード */
+  .course-section-title { font-size: 15px; font-weight: bold; margin: 25px 0 10px; border-left: 5px solid var(--secondary); padding-left: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .course-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .course-card { 
+    background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; 
+    text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: center; min-height: 90px;
   }
-}
-// Enterキーでもログインできるようにする
-document.getElementById('passInput').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') { checkPass(); }
-});
-// ▲▲▲ パスワード処理ここまで ▲▲▲
+  .course-card:active { transform: scale(0.98); background: #fafafa; }
+  
+  /* モード別スタイル */
+  .sap-card { background: #232f3e; color: white; border: 2px solid #000; }
+  .sap-card .course-desc { color: #ccc; }
+  .vocab-card { background: #e0f2f1; border-color: var(--vocab); }
+  .vocab-card .course-name { color: var(--vocab); }
 
-// ▼▼▼ 全データ ▼▼▼
-const fullQuizData = [
-  {id:1, genre:"コンピューティング", service:"EC2 スポットインスタンス", features:"最大90%OFF・中断リスクあり", scenario:"終了しても問題ないバッチ処理やステートレスなコンテナ処理。", solution:"スポットインスタンスを使用することでコストを最小化する。", antipattern:"RDS（データ消失リスク）、Webサーバー（ダウンタイム不可）。"},
-  {id:2, genre:"ストレージ", service:"S3 Intelligent-Tiering", features:"頻度に応じて料金クラス自動移動", scenario:"アクセスパターンが予測不能なデータのコスト最適化。", solution:"モニタリング料金なしで、頻繁・非頻繁アクセス層を自動で行き来する。", antipattern:"S3 Standard（高いまま）、Glacier（取り出し時間が長い）。"},
-  {id:3, genre:"データベース", service:"Aurora Serverless v2", features:"負荷に応じて瞬時に自動スケール", scenario:"予測不能なスパイクが発生するDBワークロード。", solution:"インスタンスサイズ管理不要で、リクエスト数に応じて自動スケールする。", antipattern:"Provisioned IOPS（固定費がかかる）、DynamoDB（RDBが必要な場合）。"},
-  {id:4, genre:"ネットワーク", service:"AWS Global Accelerator", features:"静的IP提供・AWS回線で高速化", scenario:"世界中のユーザーに対してUDPゲームやVoIPの遅延を減らしたい。", solution:"エッジからAWS専用線に入り、パケットロスとジッターを最小化する。", antipattern:"CloudFront（HTTPキャッシュ向けでありUDP高速化ではない）。"},
-  {id:5, genre:"セキュリティ", service:"AWS WAF", features:"L7防御・SQLインジェクション対策", scenario:"WebサイトへのXSSやSQLインジェクション攻撃を防ぎたい。", solution:"ALB/CloudFront/API Gatewayに適用し、攻撃パターンをブロックする。", antipattern:"Security Group（IP/Portのみ）、Network ACL（ステートレス）。"},
-  {id:6, genre:"アプリ統合", service:"Amazon SQS", features:"完全マネージド・システムの疎結合化", scenario:"ピーク時にDBがダウンしても注文データを失わないようにしたい。", solution:"リクエストをキューにバッファリングし、後続が復旧次第処理する。", antipattern:"Amazon SNS（即時配信のため相手がダウンしてると届かない）。"},
-  {id:7, genre:"マネジメント", service:"AWS Organizations + SCP", features:"マルチアカウント管理・禁止権限の一括適用", scenario:"100個のアカウントで特定のリージョン使用を一律禁止したい。", solution:"SCP (Service Control Policy) をOUに適用し制限を継承させる。", antipattern:"IAM Policy（アカウントごとの設定が必要で管理不能）。"},
-  {id:8, genre:"ストレージ", service:"FSx for Windows File Server", features:"Windowsネイティブ共有・AD連携", scenario:"Windows EC2間でSMB共有フォルダを利用したい。", solution:"完全マネージドなWindowsファイルサーバーを提供しAD認証を行う。", antipattern:"Amazon EFS（Linux/NFS用）、S3（ファイルシステムではない）。"},
-  {id:9, genre:"データベース", service:"Amazon RDS Proxy", features:"DB接続プール・Lambda枯渇対策", scenario:"Lambdaからの大量同時アクセスでRDSが接続エラーになる。", solution:"Proxyが接続をプール（使い回し）し、DBへの負荷を抑える。", antipattern:"Read Replica（接続数対策ではない）、ElastiCache（書き込み対策ではない）。"},
-  {id:10, genre:"ネットワーク", service:"VPC Gateway Endpoint", features:"S3/DynamoDBへの閉域接続・無料", scenario:"VPCからインターネットに出ずにS3へ大量データを送りたい。", solution:"ゲートウェイ型を使い、NAT Gatewayを経由せずコストゼロで通信する。", antipattern:"Interface Endpoint（有料）、NAT Gateway（高額な転送量）。"},
-  {id:11, genre:"コンピューティング", service:"AWS Fargate", features:"サーバーレスコンテナ・管理不要", scenario:"コンテナを動かしたいがOSパッチやサーバー管理をしたくない。", solution:"サーバーレスでコンテナを実行でき、インフラ管理が不要になる。", antipattern:"EC2起動タイプ（OS管理が必要）、Lambda（15分制限あり）。"},
-  {id:12, genre:"ストレージ", service:"S3 Object Lock (Compliance)", features:"WORM機能・ルートでも削除不可", scenario:"法規制によりデータを7年間絶対に削除・変更できないようにしたい。", solution:"コンプライアンスモードを設定し、ルートユーザーすら削除不可にする。", antipattern:"ガバナンスモード（権限があれば削除可）、IAMポリシー（書き換え可）。"},
-  {id:13, genre:"セキュリティ", service:"AWS Shield Advanced", features:"DDoS保護・コスト保険", scenario:"大規模なDDoS攻撃から保護し、攻撃によるスケーリング費用を免除したい。", solution:"L3/L4/L7の保護に加え、DDoS対応チーム(DRT)のサポートとコスト保護が付く。", antipattern:"Shield Standard（無料版・コスト保護なし）、WAF（DDoSの規模には対応不可）。"},
-  {id:14, genre:"データベース", service:"DynamoDB (On-Demand)", features:"NoSQL・スパイク対応・管理不要", scenario:"アクセス数が全く読めないキャンペーンサイトのDB。", solution:"オンデマンドモードなら事前の容量設計不要でスパイクに対応できる。", antipattern:"Aurora（スケーリングに時間がかかる）、RDS（容量固定）。"},
-  {id:15, genre:"ネットワーク", service:"CloudFront + S3 (OAC)", features:"静的サイト配信・オリジン保護", scenario:"S3のWebサイトを高速配信しつつ、S3への直接アクセスを禁止したい。", solution:"OAC (Origin Access Control) を使い、CloudFront経由のみ許可する。", antipattern:"S3 Web Hosting（WAF不可・直接アクセス制御が甘い）。"},
-  {id:16, genre:"アプリ統合", service:"Amazon EventBridge", features:"イベント駆動・SaaS連携", scenario:"「ファイルがアップロードされたら」などのイベントで別サービスを起動したい。", solution:"ルールを作成し、様々なAWSサービスやSaaSをトリガーにターゲットを起動する。", antipattern:"CloudWatch Alarms（メトリクス監視用）、SNS（フィルタリングが弱い）。"},
-  {id:17, genre:"コンピューティング", service:"Lambda + API Gateway", features:"サーバーレスAPI・スケーリング", scenario:"サーバー管理なしでREST APIを構築し、リクエスト時のみ課金したい。", solution:"API Gatewayで受け付けLambdaで処理する完全サーバーレス構成。", antipattern:"ALB + EC2（常時稼働コストがかかる）。"},
-  {id:18, genre:"セキュリティ", service:"AWS Secrets Manager", features:"認証情報の自動ローテーション", scenario:"DBのパスワードを定期的に自動変更し、コードに埋め込みたくない。", solution:"RDSと連携してパスワードを自動ローテーションし、アプリはAPIで取得する。", antipattern:"Systems Manager Parameter Store（自動ローテーション機能なし）。"},
-  {id:19, genre:"ストレージ", service:"Amazon EFS", features:"Linux共有・自動拡張", scenario:"複数のLinux EC2でWebコンテンツ置き場を共有したい。", solution:"NFSプロトコルで複数インスタンスから同時マウント可能。", antipattern:"EBS（単一アタッチ・共有不可）、S3（マウント不可）。"},
-  {id:20, genre:"データベース", service:"Amazon ElastiCache", features:"インメモリキャッシュ・ミリ秒以下", scenario:"頻繁にアクセスされる商品データのDB読み込み負荷を下げたい。", solution:"Redis/Memcachedを利用してデータをキャッシュし応答速度を上げる。", antipattern:"DAX（DynamoDB専用）、CloudFront（静的コンテンツ用）。"},
-  {id:21, genre:"ネットワーク", service:"AWS Direct Connect", features:"専用線接続・安定通信", scenario:"オンプレミスとAWSを安定した帯域と低遅延で接続したい。", solution:"インターネットを通らない専用線で接続する。", antipattern:"Site-to-Site VPN（インターネット経由のため不安定）。"},
-  {id:22, genre:"コンピューティング", service:"EC2 Auto Scaling", features:"需要に応じた台数増減", scenario:"Webサーバーの負荷に応じて自動で台数を増やしたい。", solution:"CPU使用率などをトリガーにインスタンス数を自動増減させる。", antipattern:"手動スケーリング（運用負荷大・夜間の対応不可）。"},
-  {id:23, genre:"マネジメント", service:"AWS Cost Explorer", features:"コスト分析・予実管理", scenario:"過去の利用料を分析し、将来のコストを予測したい。", solution:"グラフでリソースごとのコストを可視化しレポートを作成する。", antipattern:"AWS Budgets（予算アラート用・詳細分析は不得意）。"},
-  {id:24, genre:"ストレージ", service:"S3 Glacier Deep Archive", features:"最安保管・取り出し12時間以上", scenario:"ログデータを7年間保存するが、取り出すことはほぼない。", solution:"S3の中で最も安価なクラス。取り出しに12〜48時間かかる。", antipattern:"S3 Standard-IA（頻度が低いが即時取り出し用・コスト高）。"},
-  {id:25, genre:"データベース", service:"Amazon Redshift", features:"DWH・列指向・ビッグデータ分析", scenario:"ペタバイト級のデータを高速に集計・分析したい。", solution:"列指向ストレージと分散処理により大規模データの分析に特化。", antipattern:"RDS（行指向のため集計は遅い）、Athena（S3直接クエリ用・頻繁な分析には不向き）。"},
-  {id:26, genre:"セキュリティ", service:"AWS KMS", features:"暗号化キー管理", scenario:"EBSやS3のデータを暗号化し、キーの使用履歴を監査したい。", solution:"フルマネージドな鍵管理サービス。CloudTrailと連携してログが残る。", antipattern:"CloudHSM（専用ハードウェア・管理負荷が高い）。"},
-  {id:27, genre:"ネットワーク", service:"Route 53 (Failover)", features:"DNSフェイルオーバー", scenario:"メインサイトがダウンしたら自動でSorryページ（S3）に切り替えたい。", solution:"ヘルスチェックを設定し、異常時にトラフィックを別系統へ流す。", antipattern:"ELB（リージョン内の振り分け・リージョン跨ぎはRoute53）。"},
-  {id:28, genre:"アプリ統合", service:"Step Functions", features:"ワークフロー管理・可視化", scenario:"LambdaやFargateなど複数の処理を順序通りに実行・分岐させたい。", solution:"ステートマシンを定義し、処理の成功/失敗やリトライを視覚的に管理。", antipattern:"Lambda内での呼び出し（コードが複雑化・タイムアウトリスク）。"},
-  {id:29, genre:"コンピューティング", service:"Placement Group (Cluster)", features:"低遅延・高スループット", scenario:"HPC（ハイパフォーマンス）計算のためにEC2間の通信速度を最大化したい。", solution:"単一AZ内でインスタンスを物理的に近くに配置するクラスタープレイスメント。", antipattern:"Spread（分散配置・耐障害性重視）、Partition（Hadoop等向け）。"},
-  {id:30, genre:"ストレージ", service:"AWS Storage Gateway (File)", features:"オンプレからのS3アクセス(NFS/SMB)", scenario:"オンプレミスのサーバーからNFSでS3にファイルを保存したい。", solution:"ファイルゲートウェイを設置し、ローカルキャッシュを持ちながらS3へ送る。", antipattern:"DataSync（データ移行用・常時マウントではない）。"},
-  {id:31, genre:"データベース", service:"DynamoDB Global Tables", features:"マルチリージョン・完全同期", scenario:"世界中のユーザーに対し、ローカルのレイテンシでDB書き込みを提供したい。", solution:"複数のリージョン間でデータを自動的に双方向レプリケーションする。", antipattern:"RDS Read Replica（書き込みはプライマリのみ・リージョン間は遅延あり）。"},
-  {id:32, genre:"セキュリティ", service:"IAM Access Analyzer", features:"外部共有の検知", scenario:"S3バケットが意図せず外部公開されていないかチェックしたい。", solution:"リソースベースポリシーを分析し、外部からアクセス可能なリソースを特定する。", antipattern:"GuardDuty（脅威検知・設定ミス検知ではない）。"},
-  {id:33, genre:"ネットワーク", service:"Transit Gateway", features:"VPC間接続のハブ・一元管理", scenario:"数十個のVPCとオンプレミスを相互に接続したい。", solution:"ハブアンドスポーク構成でネットワーク接続を集約し管理を簡素化する。", antipattern:"VPC Peering（フルメッシュ構成になり管理が複雑化）。"},
-  {id:34, genre:"アプリ統合", service:"Amazon Kinesis Data Streams", features:"リアルタイムデータ収集", scenario:"IoTデバイスからの大量のログデータをリアルタイムで収集・処理したい。", solution:"シャードを使ってデータをストリーミングし、Lambda等で順次処理する。", antipattern:"SQS（順序保証が限定的・ストリーム処理ではない）。"},
-  {id:35, genre:"マネジメント", service:"AWS Trusted Advisor", features:"ベストプラクティス自動チェック", scenario:"セキュリティ設定やコスト削減の推奨事項を知りたい。", solution:"AWS環境をスキャンし、セキュリティ、コスト、パフォーマンス等の改善案を提示。", antipattern:"Config（構成変更の記録・コンプライアンス監視）。"},
-  {id:36, genre:"コンピューティング", service:"AWS Batch", features:"バッチ処理の最適化・スポット活用", scenario:"数千件のバッチジョブを効率よく、スポットインスタンスを使って処理したい。", solution:"ジョブキューと計算環境を管理し、最適なインスタンスを自動プロビジョニングする。", antipattern:"Lambda（15分の実行時間制限・メモリ制限）。"},
-  {id:37, genre:"ストレージ", service:"EBS Multi-Attach", features:"複数EC2からの同時接続", scenario:"クラスタ化されたDBのために1つのEBSを複数のEC2で共有したい。", solution:"プロビジョンドIOPSボリュームを使用し、同一AZ内の複数インスタンスにアタッチ。", antipattern:"EFS（ファイル共有用・ブロックストレージではない）。"},
-  {id:38, genre:"データベース", service:"Aurora Global Database", features:"DR対策・高速クロスリージョン複製", scenario:"リージョン規模の災害時に、1秒未満で別リージョンへ切り替えたい。", solution:"ストレージレベルのレプリケーションにより、低遅延で別リージョンへ複製・昇格可能。", antipattern:"RDS Cross-Region Replica（レプリケーション遅延が大きい）。"},
-  {id:39, genre:"ネットワーク", service:"VPC Flow Logs", features:"ENI通信ログ・トラブルシュート", scenario:"セキュリティグループで拒否された通信や、通信内容（メタデータ）を調査したい。", solution:"ENIを行き来するIPトラフィック情報をCloudWatch Logs等に保存する。", antipattern:"CloudTrail（API呼び出し履歴・パケットの中身ではない）。"},
-  {id:40, genre:"セキュリティ", service:"Amazon GuardDuty", features:"脅威検知・機械学習", scenario:"AWS環境に対する不審な通信やマイニング行為を検知したい。", solution:"VPCフローログやDNSログを分析し、AIが脅威を自動検知して通知する。", antipattern:"Macie（S3内の機密データ検出用）。"},
-  {id:41, genre:"アプリ統合", service:"Amazon SNS", features:"プッシュ通知・ファンアウト", scenario:"1つのメッセージをメール、Lambda、SQSなど複数箇所に同時に送りたい。", solution:"トピックを作成し、サブスクライブしている全エンドポイントへプッシュ配信する。", antipattern:"SQS（1対1の処理・ポーリング型）。"},
-  {id:42, genre:"マネジメント", service:"AWS Config", features:"構成変更履歴・コンプライアンス", scenario:"「誰がいつセキュリティグループを変更したか」を追跡したい。", solution:"リソースの設定変更をタイムラインで記録し、ルール違反があれば検知する。", antipattern:"CloudTrail（「APIを叩いた事実」の記録・変更前後の値は見にくい）。"},
-  {id:43, genre:"コンピューティング", service:"User Data", features:"起動時スクリプト", scenario:"EC2起動時にApacheのインストールとWebページのダウンロードを自動化したい。", solution:"起動時に一度だけ実行されるシェルスクリプトを設定する。", antipattern:"Cron（定期実行用）、AMI（OSイメージ自体の作成）。"},
-  {id:44, genre:"ストレージ", service:"Amazon S3 Lifecycle Policy", features:"自動削除・クラス移動", scenario:"作成から30日後にGlacierへ移動し、1年後に削除したい。", solution:"ライフサイクルルールを設定し、オブジェクトの移動や削除を自動化する。", antipattern:"Lambdaでの定期実行（コストと管理の手間がかかる）。"},
-  {id:45, genre:"データベース", service:"DynamoDB Streams", features:"DB変更トリガー", scenario:"DBにデータが追加されたら、即座にLambdaを起動して加工したい。", solution:"テーブルの変更履歴（追加・更新・削除）を時系列でキャプチャしトリガーにする。", antipattern:"Kinesis（アプリ側で書き込みが必要）。"},
-  {id:46, genre:"ネットワーク", service:"Route 53 (Geolocation)", features:"地理的ルーティング", scenario:"ユーザーの国に合わせて、日本語版または英語版のサーバーに誘導したい。", solution:"アクセス元のIPアドレスに基づいて、特定の地域のサーバーへDNS解決する。", antipattern:"Latency Routing（遅延が最小の場所へ・国単位ではない）。"},
-  {id:47, genre:"セキュリティ", service:"Amazon Cognito", features:"認証・認可・SSO", scenario:"WebアプリにFacebookログインやユーザー登録機能を追加したい。", solution:"ユーザープールでID管理を行い、IDプールでAWSリソースへのアクセス権を付与する。", antipattern:"IAM Users（アプリのエンドユーザー管理には使わない）。"},
-  {id:48, genre:"アプリ統合", service:"AWS AppSync", features:"GraphQL・リアルタイム更新", scenario:"モバイルアプリでオフラインデータの同期や、必要なデータのみを取得したい。", solution:"GraphQLを使用して、クライアントが必要なデータ構造を指定して取得できる。", antipattern:"API Gateway（REST API・オーバーフェッチが発生しやすい）。"},
-  {id:49, genre:"マネジメント", service:"AWS Systems Manager Session Manager", features:"SSH不要・ブラウザ接続", scenario:"SSHポート(22)を開けずに、安全にEC2インスタンスへ接続したい。", solution:"IAM権限のみで接続でき、操作ログもS3/CloudWatchに保存される。", antipattern:"Bastion Host（踏み台サーバーの管理・ポート開放が必要）。"},
-  {id:50, genre:"アプリケーション統合", service:"AWS Backup (Cross-Region)", features:"バックアップ一元管理・遠隔地コピー", scenario:"コンプライアンス要件でEC2/RDSのバックアップを別リージョンに保管したい。", solution:"AWS Backupでプランを作成し、クロスリージョンコピーを有効化する。", antipattern:"手動スナップショット（運用負荷大・コピー漏れのリスク）。"},
-  {id:51, genre:"コンピューティング", service:"EC2 IAM Role for SSM", features:"EC2からの安全なアクセス", scenario:"EC2からDBパスワード(暗号化)を取得したいが、コードにキーを書きたくない。", solution:"IAMロールをEC2に付与し、Parameter Storeへのアクセス権を持たせる。", antipattern:"アクセスキーの埋め込み（漏洩リスク・管理負荷）。"},
-  {id:52, genre:"セキュリティ", service:"WAF + Shield + NLB", features:"多層防御・DDoS対策", scenario:"API基盤に対し、DDoS攻撃とSQLインジェクションの両方を防ぎたい。", solution:"NLBにShieldを適用(DDoS)、API GatewayにWAFを適用(Web攻撃)する。", antipattern:"NLBにWAF（適用不可）、WAFのみ（大規模DDoSに弱い）。"},
-  {id:53, genre:"アプリ統合", service:"Microservices Decoupling (SQS)", features:"疎結合・バッファリング", scenario:"受信側システムがメンテナンス中でも送信側がエラーにならないようにしたい。", solution:"SQSを間に挟み、メッセージを保持することで依存関係を切り離す。", antipattern:"SNS（相手がダウンしてると消える）、Lambda（バッファ機能なし）。"},
-  {id:54, genre:"データベース", service:"RDS Multi-AZ", features:"高可用性・自動フェイルオーバー", scenario:"本番DBの障害時に、IP変更なしで自動的に予備機へ切り替えたい。", solution:"同期レプリケーションされたスタンバイ機へDNSレベルで自動フェイルオーバーする。", antipattern:"Read Replica（手動昇格が必要・非同期でデータ欠損リスク）。"},
-  {id:55, genre:"アプリ統合", service:"Serverless Web App (S3+Lambda+DDB)", features:"完全サーバーレス・管理ゼロ", scenario:"インフラ管理を一切せず、アクセス数に応じて勝手にスケールするWebアプリ。", solution:"静的資産はS3、ロジックはLambda、DBはDynamoDBで構成する。", antipattern:"EC2 + RDS（OS管理・スケーリング設定が必要）。"},
-  {id:56, genre:"ネットワーク", service:"Security Group for Direct Connect", features:"オンプレからの通信制御", scenario:"Direct Connect経由のオンプレミスIPからのみ、特定のEC2へのアクセスを許可したい。", solution:"EC2のセキュリティグループで、オンプレミスのCIDR範囲を許可する。", antipattern:"NAC（ステートレスで管理複雑）、VPN追加（不要）。"},
-  {id:57, genre:"コンピューティング", service:"ECS Task Role", features:"タスク単位の権限管理", scenario:"ECS上のコンテナAはS3可、コンテナBは不可、と権限を分けたい。", solution:"「タスクロール」を使用し、コンテナ（タスク）ごとにIAMロールを割り当てる。", antipattern:"実行ロール（エージェント用）、インスタンスプロファイル（ホスト全体用）。"},
-  {id:58, genre:"ストレージ", service:"FSx for Windows File Server", features:"Windows共有・AD統合", scenario:"Windowsサーバー群で共有ファイルシステムを使い、ADの権限設定を維持したい。", solution:"WindowsネイティブなFSxを使用し、Active Directoryと連携する。", antipattern:"EFS（Windows非対応）、S3（ACL管理がADと異なる）。"},
-  {id:59, genre:"コンピューティング", service:"Fargate + RDS Multi-AZ", features:"コンテナ×DBの管理レスHA", scenario:"コンテナとDBの可用性を高めたいが、OS管理やパッチ当てはしたくない。", solution:"Fargateでサーバー管理を排除し、RDS Multi-AZでDB運用を自動化する。", antipattern:"EC2起動タイプ（OS管理あり）、RDSシングルAZ（HAなし）。"},
-  {id:60, genre:"アプリ統合", service:"AWS Transfer Family", features:"SFTPのS3化・サーバーレス", scenario:"取引先がSFTPでのファイル送信を求めているが、サーバー管理はしたくない。", solution:"Transfer Familyを使い、S3をバックエンドにしたSFTPサーバーを提供する。", antipattern:"S3 File Gateway（SFTP非対応）、EC2で構築（管理負荷）。"},
-  {id:61, genre:"ストレージ", service:"S3 Object Lock Compliance", features:"法的保存・完全削除不可", scenario:"監査データを7年間、ルートユーザーを含め誰にも削除させない。", solution:"コンプライアンスモードを使用し、保持期間中の削除・変更を完全に防ぐ。", antipattern:"ガバナンスモード（特定ユーザーは削除可）、IAMポリシー（変更可）。"},
-  {id:62, genre:"コンピューティング", service:"Elastic Beanstalk (Blue/Green)", features:"PaaS・ダウンタイムなしデプロイ", scenario:"インフラ管理なしでWebアプリを公開し、無停止で新版へ切り替えたい。", solution:"新しい環境(Green)を作成し、CNAME(URL)を入れ替えることで瞬時に切り替える。", antipattern:"EC2手動構築（手間）、Rolling Update（一時的に性能低下）。"},
-  {id:63, genre:"データベース", service:"Aurora Read Replica", features:"読み取り負荷分離", scenario:"分析クエリのせいで、ECサイトの注文処理（書き込み）が遅くなっている。", solution:"リードレプリカを作成し、読み取り専用エンドポイントへ分析クエリを流す。", antipattern:"Redshift（移行コスト大）、インスタンスサイズアップ（根本解決にならない）。"},
-  {id:64, genre:"アプリ統合", service:"Textract + Athena", features:"サーバーレスOCR・分析", scenario:"大量の書類をスキャンし、中身の文字データをSQLで分析したい。", solution:"Textractで文字抽出しS3へ保存、Athenaで直接クエリを実行する。", antipattern:"Rekognition（画像認識用）、SageMaker（開発コスト大）。"},
-  {id:65, genre:"データベース", service:"RDS Read Replica vs ElastiCache", features:"読み取り分散 vs キャッシュ", scenario:"「複雑な検索クエリ」によるDB負荷を下げたい。", solution:"同じクエリの繰り返しではないため、キャッシュではなくリードレプリカで分散する。", antipattern:"ElastiCache（単純なキー・バリュー取得に有効）、DNSキャッシュ（無関係）。"},
-  {id:66, genre:"データベース", service:"Multi-AZ vs Multi-Region", features:"高可用性 vs 災害対策(DR)", scenario:"データセンター障害に耐えられれば良い（高可用性）要件への対応。", solution:"Multi-AZ（同期・同リージョン）構成をとる。", antipattern:"Multi-Region（DR用・コスト高・遅延あり）。"},
-  {id:67, genre:"アプリ統合", service:"SQS (Buffering)", features:"耐障害性・スパイク吸収", scenario:"ECサイトで注文が殺到しても、システムをダウンさせず処理したい。", solution:"SQSで注文を受け止め、バックエンドが処理できるペースで取り出す。", antipattern:"SNS（流量制御できない）、Lambda直接起動（同時実行数制限）。"}
-];
-
-let appState = { mode: '', questions: [], currentIndex: 0, correctCount: 0, wrongList: [], isEndless: false };
-
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
-  const quitBtn = document.getElementById('quitBtn');
-  if(screenId === 'quizScreen') quitBtn.classList.remove('hidden');
-  else quitBtn.classList.add('hidden');
-}
-function goHome() { showScreen('homeScreen'); }
-
-function startCourse(mode) {
-  appState.mode = mode;
-  appState.currentIndex = 0;
-  appState.correctCount = 0;
-  appState.wrongList = [];
-  appState.isEndless = (mode === 'endless');
-  let shuffled = shuffle([...fullQuizData]);
-  if (mode === 'short') { appState.questions = shuffled.slice(0, 15); }
-  else if (mode === 'mock') { appState.questions = shuffled.slice(0, 30); }
-  else if (mode === 'all') { appState.questions = shuffled; }
-  else if (mode === 'endless') { appState.questions = shuffled; }
-  showScreen('quizScreen');
-  renderQuestion();
-}
-
-function renderQuestion() {
-  const q = appState.questions[appState.currentIndex];
-  document.getElementById('feedbackArea').style.display = 'none';
-  document.getElementById('nextBtn').classList.add('hidden');
-  document.getElementById('finishBtn').classList.add('hidden');
-  document.getElementById('optionsList').innerHTML = '';
-  document.getElementById('genreTag').innerText = q.genre || "General";
-  let total = appState.questions.length;
-  let current = appState.currentIndex + 1;
-  let pct = (current / total) * 100;
-  if (appState.isEndless) {
-    document.getElementById('questionCount').innerText = `Q. ${current} (Endless)`;
-    document.getElementById('progressBar').style.width = '100%';
-  } else {
-    document.getElementById('questionCount').innerText = `Q. ${current} / ${total}`;
-    document.getElementById('progressBar').style.width = `${pct}%`;
-  }
-  document.getElementById('scorePreview').innerText = `Score: ${appState.correctCount}`;
-  document.getElementById('questionText').innerText = q.scenario;
-  let options = [{ text: q.service, isCorrect: true }];
-  let distractors = fullQuizData.filter(d => d.id !== q.id);
-  shuffle(distractors);
-  distractors.slice(0, 3).forEach(d => options.push({ text: d.service, isCorrect: false }));
-  shuffle(options);
-  const list = document.getElementById('optionsList');
-  options.forEach((opt, idx) => {
-    const btn = document.createElement('div');
-    btn.className = 'option-btn';
-    btn.innerHTML = `<span style="font-weight:bold; margin-right:10px;">${String.fromCharCode(65+idx)}.</span> ${opt.text}`;
-    btn.onclick = () => checkAnswer(btn, opt, q);
-    list.appendChild(btn);
-  });
-}
-
-function checkAnswer(btn, option, qData) {
-  if (document.querySelector('.option-btn.correct') || document.querySelector('.option-btn.wrong')) return;
-  const feedback = document.getElementById('feedbackArea');
-  const title = feedback.querySelector('.feedback-title');
-  const detail = document.getElementById('feedbackDetail');
-  const allBtns = document.querySelectorAll('.option-btn');
-  allBtns.forEach(b => { if(b.innerText.includes(qData.service)) b.classList.add('correct'); });
-  if (option.isCorrect) {
-    appState.correctCount++;
-    title.innerText = "✅ 正解！"; title.style.color = "#2e7d32";
-    feedback.style.backgroundColor = "#f1f8e9"; feedback.style.borderColor = "#c8e6c9";
-  } else {
-    btn.classList.add('wrong'); appState.wrongList.push(qData);
-    title.innerText = "❌ 不正解..."; title.style.color = "#c62828";
-    feedback.style.backgroundColor = "#ffebee"; feedback.style.borderColor = "#ffcdd2";
-  }
-  detail.innerHTML = `<div style="font-size:12px; color:#555; margin-bottom:5px;">💡 ${qData.features}</div><strong>解説:</strong> ${qData.solution}<br><div style="margin-top:8px; color:#d32f2f; font-size:13px;">⚠️ <strong>注意点:</strong> ${qData.antipattern}</div>`;
-  feedback.style.display = 'block';
-  feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  if (appState.isEndless) { document.getElementById('nextBtn').classList.remove('hidden'); }
-  else {
-    if (appState.currentIndex < appState.questions.length - 1) { document.getElementById('nextBtn').classList.remove('hidden'); }
-    else { document.getElementById('finishBtn').classList.remove('hidden'); }
-  }
-}
-
-function nextQuestion() {
-  appState.currentIndex++;
-  if (appState.isEndless && appState.currentIndex >= appState.questions.length) {
-    shuffle(appState.questions); appState.currentIndex = 0;
-  }
-  renderQuestion();
-}
-
-function confirmQuit() { if(confirm("学習を中断して結果を見ますか？")) { finishQuiz(); } }
-
-function finishQuiz() {
-  showScreen('resultScreen');
-  let totalAnswered = appState.currentIndex + 1;
-  if (!document.getElementById('feedbackArea').style.display) { totalAnswered = Math.max(0, totalAnswered - 1); }
-  if (!appState.isEndless && totalAnswered > appState.questions.length) { totalAnswered = appState.questions.length; }
-  let pct = 0; if(totalAnswered > 0) { pct = Math.round((appState.correctCount / totalAnswered) * 100); }
-  document.getElementById('finalScore').innerText = pct;
-  let msg = "Keep Going!";
-  if(pct >= 90) msg = "Excellent!"; else if(pct >= 70) msg = "Good Job!"; else if(pct >= 50) msg = "Nice Try!";
-  document.getElementById('resultMessage').innerText = msg;
-  setTimeout(() => {
-    document.getElementById('resultGraph').style.width = `${pct}%`;
-    document.getElementById('resultGraphText').innerText = `${appState.correctCount} / ${totalAnswered} 問正解`;
-  }, 300);
-  const reviewDiv = document.getElementById('reviewSection');
-  const reviewList = document.getElementById('reviewList');
-  reviewList.innerHTML = '';
-  if (appState.wrongList.length > 0) {
-    reviewDiv.classList.remove('hidden');
-    appState.wrongList.forEach(q => {
-      const item = document.createElement('div');
-      item.className = 'review-item';
-      item.innerHTML = `<div style="font-weight:bold; margin-bottom:5px; color:#c62828;">Q. ${q.scenario}</div><div style="color:#2e7d32; font-size:13px;">✅ ${q.service}</div><div style="color:#666; font-size:12px; margin-top:2px;">${q.solution}</div>`;
-      reviewList.appendChild(item);
-    });
-  } else { reviewDiv.classList.add('hidden'); }
-}
-
-function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
-</script>
-</body>
-</html>
+  .course-icon { font-size: 24px; margin-bottom: 6px; display: block; }
+  .course-name { font-weight: bold; font-size: 14px; display: block; }
+  .course-desc { font-size: 11px; color:
