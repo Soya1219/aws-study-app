@@ -311,7 +311,43 @@
   </div>
 </div>
 
+
+
+
+
+
 <script>
+
+
+/* ==========================================
+   0. Security & Anti-Debug (簡易プロテクト)
+   ========================================== */
+(function() {
+  // 右クリック禁止
+  document.addEventListener('contextmenu', event => event.preventDefault());
+
+  // ショートカットキー禁止 (F12, Ctrl+Shift+I, Ctrl+U, etc.)
+  document.onkeydown = function(e) {
+    if (e.keyCode == 123) { return false; } // F12
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; } // Ctrl+Shift+I
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; } // Ctrl+Shift+C
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; } // Ctrl+Shift+J
+    if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; } // Ctrl+U
+  };
+
+  // デバッガートラップ (開発者ツールを開くと動作が停止するようにする)
+  setInterval(function() {
+    const startTime = performance.now();
+    debugger; // ここで止まる
+    const endTime = performance.now();
+    if (endTime - startTime > 100) {
+      alert("DevTools detected. Please close it to continue.");
+      window.location.reload();
+    }
+  }, 1000);
+})();
+
+
 /* ==========================================
    1. Data Sources
    ========================================== */
