@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AWS Master v5.1 (Fixed)</title>
+<title>AWS Master v5.2 (Fixed)</title>
 <style>
   /* --- デザイン定義 --- */
   :root { --primary: #232f3e; --secondary: #ff9900; --bg: #f2f3f3; --text: #232f3e; --correct: #1b5e20; --wrong: #b71c1c; --vocab: #00796b; }
@@ -128,11 +128,7 @@
     <div class="course-grid">
       <div class="course-card" onclick="startCourse('saa_15')">
         <span class="course-icon">⚡</span>
-        <div><span class="course-name">クイック 15問</span><span class="course-desc">ランダム出題</span></div>
-      </div>
-      <div class="course-card" onclick="startCourse('saa_30')">
-        <span class="course-icon">📝</span>
-        <div><span class="course-name">ハーフ模試 30問</span><span class="course-desc">実力確認用</span></div>
+        <div><span class="course-name">クイック 15問</span><span class="course-desc">ランダム出題 (重複なし)</span></div>
       </div>
       <div class="course-card" onclick="startCourse('saa_endless')">
         <span class="course-icon">♾️</span>
@@ -178,29 +174,155 @@
       <div id="finalScore" class="score-number">0%</div>
       <div id="resultMsg" class="score-msg"></div>
     </div>
-    
     <div style="font-weight:bold; border-bottom:2px solid #ddd; padding-bottom:5px;">⚠️ 復習リスト</div>
     <div id="reviewList" class="review-list"></div>
-
-    <div class="footer-area">
-      <button class="btn-next" onclick="goHome()">ホームに戻る</button>
-    </div>
+    <div class="footer-area"><button class="btn-next" onclick="goHome()">ホームに戻る</button></div>
   </div>
 </div>
 
 <script>
 // --- Data Sources ---
-// 1. Vocabulary (67問)
+// 1. Vocabulary (67問 - 既存データ)
 const vocabData=[{id:1,a:"EC2 Spot Instances",f:"最大90%OFF・中断リスクあり",q:"終了しても問題ないバッチ処理やステートレスなコンテナ処理。コストを最小化したい。"},{id:2,a:"S3 Intelligent-Tiering",f:"頻度に応じて料金クラス自動移動",q:"アクセスパターンが予測不能なデータのコスト最適化。モニタリング料金なし。"},{id:3,a:"Aurora Serverless v2",f:"負荷に応じて瞬時に自動スケール",q:"予測不能なスパイクが発生するDBワークロード。容量管理不要。"},{id:4,a:"AWS Global Accelerator",f:"静的IP提供・AWS回線で高速化",q:"世界中のユーザーに対してUDPゲームやVoIPの遅延を減らしたい。"},{id:5,a:"AWS WAF",f:"L7防御・SQLインジェクション対策",q:"WebサイトへのXSSやSQLインジェクション攻撃を防ぎたい。"},{id:6,a:"Amazon SQS",f:"完全マネージド・システムの疎結合化",q:"ピーク時にDBがダウンしても注文データを失わないようにしたい。疎結合化。"},{id:7,a:"AWS Organizations + SCP",f:"マルチアカウント管理・禁止権限の一括適用",q:"100個のアカウントで特定のリージョン使用を一律禁止したい。"},{id:8,a:"FSx for Windows File Server",f:"Windowsネイティブ共有・AD連携",q:"Windows EC2間でSMB共有フォルダを利用したい。AD認証必須。"},{id:9,a:"Amazon RDS Proxy",f:"DB接続プール・Lambda枯渇対策",q:"Lambdaからの大量同時アクセスでRDSが接続エラーになる。"},{id:10,a:"VPC Gateway Endpoint",f:"S3/DynamoDBへの閉域接続・無料",q:"VPCからインターネットに出ずにS3へ大量データを送りたい。"},{id:11,a:"AWS Fargate",f:"サーバーレスコンテナ・管理不要",q:"コンテナを動かしたいがOSパッチやサーバー管理をしたくない。"},{id:12,a:"S3 Object Lock (Compliance)",f:"WORM機能・ルートでも削除不可",q:"法規制によりデータを7年間絶対に削除・変更できないようにしたい。"},{id:13,a:"AWS Shield Advanced",f:"DDoS保護・コスト保険",q:"大規模なDDoS攻撃から保護し、攻撃によるスケーリング費用を免除したい。"},{id:14,a:"DynamoDB (On-Demand)",f:"NoSQL・スパイク対応・管理不要",q:"アクセス数が全く読めないキャンペーンサイトのDB。容量設計不要。"},{id:15,a:"CloudFront + S3 (OAC)",f:"静的サイト配信・オリジン保護",q:"S3のWebサイトを高速配信しつつ、S3への直接アクセスを禁止したい。"},{id:16,a:"Amazon EventBridge",f:"イベント駆動・SaaS連携",q:"「ファイルがアップロードされたら」などのイベントで別サービスを起動したい。"},{id:17,a:"Lambda + API Gateway",f:"サーバーレスAPI・スケーリング",q:"サーバー管理なしでREST APIを構築し、リクエスト時のみ課金したい。"},{id:18,a:"AWS Secrets Manager",f:"認証情報の自動ローテーション",q:"DBのパスワードを定期的に自動変更し、コードに埋め込みたくない。"},{id:19,a:"Amazon EFS",f:"Linux共有・自動拡張",q:"複数のLinux EC2でWebコンテンツ置き場を共有したい。"},{id:20,a:"Amazon ElastiCache",f:"インメモリキャッシュ・ミリ秒以下",q:"頻繁にアクセスされる商品データのDB読み込み負荷を下げたい。"},{id:21,a:"AWS Direct Connect",f:"専用線接続・安定通信",q:"オンプレミスとAWSを安定した帯域と低遅延で接続したい。"},{id:22,a:"EC2 Auto Scaling",f:"需要に応じた台数増減",q:"Webサーバーの負荷に応じて自動で台数を増やしたい。"},{id:23,a:"AWS Cost Explorer",f:"コスト分析・予実管理",q:"過去の利用料を分析し、将来のコストを予測したい。"},{id:24,a:"S3 Glacier Deep Archive",f:"最安保管・取り出し12時間以上",q:"ログデータを7年間保存するが、取り出すことはほぼない。"},{id:25,a:"Amazon Redshift",f:"DWH・列指向・ビッグデータ分析",q:"ペタバイト級のデータを高速に集計・分析したい。"},{id:26,a:"AWS KMS",f:"暗号化キー管理",q:"EBSやS3のデータを暗号化し、キーの使用履歴を監査したい。"},{id:27,a:"Route 53 (Failover)",f:"DNSフェイルオーバー",q:"メインサイトがダウンしたら自動でSorryページ（S3）に切り替えたい。"},{id:28,a:"Step Functions",f:"ワークフロー管理・可視化",q:"LambdaやFargateなど複数の処理を順序通りに実行・分岐させたい。"},{id:29,a:"Placement Group (Cluster)",f:"低遅延・高スループット",q:"HPC（ハイパフォーマンス）計算のためにEC2間の通信速度を最大化したい。"},{id:30,a:"AWS Storage Gateway (File)",f:"オンプレからのS3アクセス(NFS/SMB)",q:"オンプレミスのサーバーからNFSでS3にファイルを保存したい。"},{id:31,a:"DynamoDB Global Tables",f:"マルチリージョン・完全同期",q:"世界中のユーザーに対し、ローカルのレイテンシでDB書き込みを提供したい。"},{id:32,a:"IAM Access Analyzer",f:"外部共有の検知",q:"S3バケットが意図せず外部公開されていないかチェックしたい。"},{id:33,a:"Transit Gateway",f:"VPC間接続のハブ・一元管理",q:"数十個のVPCとオンプレミスを相互に接続したい。ハブアンドスポーク。"},{id:34,a:"Amazon Kinesis Data Streams",f:"リアルタイムデータ収集",q:"IoTデバイスからの大量のログデータをリアルタイムで収集・処理したい。"},{id:35,a:"AWS Trusted Advisor",f:"ベストプラクティス自動チェック",q:"セキュリティ設定やコスト削減の推奨事項を知りたい。"},{id:36,a:"AWS Batch",f:"バッチ処理の最適化・スポット活用",q:"数千件のバッチジョブを効率よく、スポットインスタンスを使って処理したい。"},{id:37,a:"EBS Multi-Attach",f:"複数EC2からの同時接続",q:"クラスタ化されたDBのために1つのEBSを複数のEC2で共有したい。"},{id:38,a:"Aurora Global Database",f:"DR対策・高速クロスリージョン複製",q:"リージョン規模の災害時に、1秒未満で別リージョンへ切り替えたい。"},{id:39,a:"VPC Flow Logs",f:"ENI通信ログ・トラブルシュート",q:"セキュリティグループで拒否された通信や、通信内容（メタデータ）を調査したい。"},{id:40,a:"Amazon GuardDuty",f:"脅威検知・機械学習",q:"AWS環境に対する不審な通信やマイニング行為を検知したい。"},{id:41,a:"Amazon SNS",f:"プッシュ通知・ファンアウト",q:"1つのメッセージをメール、Lambda、SQSなど複数箇所に同時に送りたい。"},{id:42,a:"AWS Config",f:"構成変更履歴・コンプライアンス",q:"「誰がいつセキュリティグループを変更したか」を追跡したい。"},{id:43,a:"User Data",f:"起動時スクリプト",q:"EC2起動時にApacheのインストールとWebページのダウンロードを自動化したい。"},{id:44,a:"S3 Lifecycle Policy",f:"自動削除・クラス移動",q:"作成から30日後にGlacierへ移動し、1年後に削除したい。"},{id:45,a:"DynamoDB Streams",f:"DB変更トリガー",q:"DBにデータが追加されたら、即座にLambdaを起動して加工したい。"},{id:46,a:"Route 53 (Geolocation)",f:"地理的ルーティング",q:"ユーザーの国に合わせて、日本語版または英語版のサーバーに誘導したい。"},{id:47,a:"Amazon Cognito",f:"認証・認可・SSO",q:"WebアプリにFacebookログインやユーザー登録機能を追加したい。"},{id:48,a:"AWS AppSync",f:"GraphQL・リアルタイム更新",q:"モバイルアプリでオフラインデータの同期や、必要なデータのみを取得したい。"},{id:49,a:"Systems Manager Session Manager",f:"SSH不要・ブラウザ接続",q:"SSHポート(22)を開けずに、安全にEC2インスタンスへ接続したい。"},{id:50,a:"AWS Backup (Cross-Region)",f:"バックアップ一元管理・遠隔地コピー",q:"コンプライアンス要件でEC2/RDSのバックアップを別リージョンに保管したい。"},{id:51,a:"EC2 IAM Role for SSM",f:"EC2からの安全なアクセス",q:"EC2からDBパスワード(暗号化)を取得したいが、コードにキーを書きたくない。"},{id:52,a:"WAF + Shield + NLB",f:"多層防御・DDoS対策",q:"API基盤に対し、DDoS攻撃とSQLインジェクションの両方を防ぎたい。"},{id:53,a:"Microservices Decoupling (SQS)",f:"疎結合・バッファリング",q:"受信側システムがメンテナンス中でも送信側がエラーにならないようにしたい。"},{id:54,a:"RDS Multi-AZ",f:"高可用性・自動フェイルオーバー",q:"本番DBの障害時に、IP変更なしで自動的に予備機へ切り替えたい。"},{id:55,a:"Serverless Web App",f:"S3+Lambda+DDB・管理ゼロ",q:"インフラ管理を一切せず、アクセス数に応じて勝手にスケールするWebアプリ。"},{id:56,a:"Security Group for Direct Connect",f:"オンプレからの通信制御",q:"Direct Connect経由のオンプレミスIPからのみ、特定のEC2へのアクセスを許可したい。"},{id:57,a:"ECS Task Role",f:"タスク単位の権限管理",q:"ECS上のコンテナAはS3可、コンテナBは不可、と権限を分けたい。"},{id:58,a:"FSx for Windows File Server",f:"Windows共有・AD統合",q:"Windowsサーバー群で共有ファイルシステムを使い、ADの権限設定を維持したい。"},{id:59,a:"Fargate + RDS Multi-AZ",f:"コンテナ×DBの管理レスHA",q:"コンテナとDBの可用性を高めたいが、OS管理やパッチ当てはしたくない。"},{id:60,a:"AWS Transfer Family",f:"SFTPのS3化・サーバーレス",q:"取引先がSFTPでのファイル送信を求めているが、サーバー管理はしたくない。"},{id:61,a:"S3 Object Lock Compliance",f:"法的保存・完全削除不可",q:"監査データを7年間、ルートユーザーを含め誰にも削除させない。"},{id:62,a:"Elastic Beanstalk (Blue/Green)",f:"PaaS・ダウンタイムなしデプロイ",q:"インフラ管理なしでWebアプリを公開し、無停止で新版へ切り替えたい。"},{id:63,a:"Aurora Read Replica",f:"読み取り負荷分離",q:"分析クエリのせいで、ECサイトの注文処理（書き込み）が遅くなっている。"},{id:64,a:"Textract + Athena",f:"サーバーレスOCR・分析",q:"大量の書類をスキャンし、中身の文字データをSQLで分析したい。"},{id:65,a:"RDS Read Replica vs ElastiCache",f:"読み取り分散 vs キャッシュ",q:"「複雑な検索クエリ」によるDB負荷を下げたい。"},{id:66,a:"Multi-AZ vs Multi-Region",f:"高可用性 vs 災害対策(DR)",q:"データセンター障害に耐えられれば良い（高可用性）要件への対応。"},{id:67,a:"SQS (Buffering)",f:"耐障害性・スパイク吸収",q:"ECサイトで注文が殺到しても、システムをダウンさせず処理したい。"}];
 
-// 2. SAA Scenario
-const saaData=[{id:"saa_1",a:"EC2 Spot Instances を使用して、ECSクラスターまたはEKSノードグループを構成する。",q:"あるスタートアップ企業は、画像処理を行うバッチアプリケーションをコンテナ化してAWS上で実行する計画を立てています。この処理はステートレスであり、いつでも中断して再開することが可能です。最もコスト効率の高いコンピューティングオプションはどれですか？",t:"コスト最適化"},{id:"saa_2",a:"S3 Object Lock を「コンプライアンスモード」で有効にし、保持期間を7年に設定する。",q:"企業のコンプライアンス要件により、特定の契約書データを7年間保存する必要があります。この期間中、ルートユーザーを含むいかなるユーザーもデータを削除または上書きしてはいけません。どのS3機能を使用すべきですか？",t:"データ保護"},{id:"saa_3",a:"Amazon Aurora Serverless v2 を使用して、アプリケーションの需要に応じてデータベース容量を自動的にスケーリングさせる。",q:"ECサイトを運営する企業は、予測不能なトラフィックの急増（スパイク）に直面しています。データベース層にはリレーショナルデータベースが必要ですが、事前の容量計画が難しく、アイドル時間のコストを削減したいと考えています。最適なソリューションは？",t:"スケーリング"},{id:"saa_4",a:"AWS Global Accelerator を使用して、ユーザーのトラフィックを最も近いエッジロケーションからAWSグローバルネットワーク経由でルーティングする。",q:"グローバルに展開するゲーム会社は、世界中のユーザーに対してUDPベースのオンラインゲームを提供しています。ネットワークの遅延とジッターを最小限に抑え、安定した接続を提供するための最適なアーキテクチャはどれですか？",t:"ネットワーク高速化"},{id:"saa_5",a:"Amazon FSx for Windows File Server をデプロイし、AWS Directory Service または自己管理型ADと統合する。",q:"ある企業は、オンプレミスのデータセンターとAWS VPCを接続し、社内のWindowsファイルサーバーにあるデータをAWS上のWindowsインスタンスと共有したいと考えています。既存のActive Directory認証を利用する必要があります。推奨されるストレージサービスは？",t:"Windows移行"},{id:"saa_6",a:"Amazon SQS を導入して注文リクエストをキューイングし、バックエンドワーカーが処理可能なペースでメッセージをポーリングする構成にする。",q:"Eコマースアプリケーションにおいて、注文処理システムのバックエンドデータベースが一時的に利用不可になった場合でも、顧客からの注文データを絶対に消失しないようにする必要があります。アプリケーションを疎結合にするための最適な設計は？",t:"疎結合・耐障害性"},{id:"saa_7",a:"AWS Organizations の SCP (Service Control Policy) を使用して、対象のOU（組織単位）に対してリージョン制限ポリシーを一括適用する。",q:"大規模な組織が100以上のAWSアカウントを運用しています。セキュリティチームは、特定のアカウントを除き、すべての未承認リージョンでのリソース作成を禁止したいと考えています。運用負荷を最小限に抑える方法は？",t:"ガバナンス"},{id:"saa_8",a:"Amazon RDS Proxy をデプロイしてデータベース接続をプールし、多数のLambda関数からの接続を効率的に多重化する。",q:"Lambda関数を使用してRDSデータベースにアクセスするアプリケーションがあります。トラフィックのピーク時に、Lambdaが大量に同時実行され、RDSの最大接続数を超過してエラーが発生しています。コードを変更せずに解決するには？",t:"サーバーレスDB接続"},{id:"saa_9",a:"VPC Gateway Endpoint (S3用) を作成し、ルートテーブルを設定してS3へのトラフィックをAWSネットワーク内でルーティングする。",q:"セキュリティ要件の厳しい企業が、プライベートサブネット内のEC2インスタンスからS3バケットへ大量のデータを転送する必要があります。データはインターネットを経由してはならず、コストを最小限に抑える必要があります。",t:"VPCネットワーキング"},{id:"saa_10",a:"AWS WAF (Web Application Firewall) を作成し、適切なWeb ACLルールを設定してALBおよびCloudFrontに関連付ける。",q:"WebアプリケーションへのSQLインジェクションやクロスサイトスクリプティング（XSS）攻撃を防ぐ必要があります。この防御策は、ALB（Application Load Balancer）およびCloudFrontディストリビューションの両方に適用可能である必要があります。",t:"Webセキュリティ"}];
+// 2. SAA Scenario Data (全125問 - 完全版)
+const saaData = [
+  // --- 既存の20問 (ID: 1-20) ---
+  {id:"saa_1", a:"EC2 Spot Instances を使用して、ECSクラスターまたはEKSノードグループを構成する。", q:"あるスタートアップ企業は、画像処理を行うバッチアプリケーションをコンテナ化してAWS上で実行する計画を立てています。この処理はステートレスであり、いつでも中断して再開することが可能です。最もコスト効率の高いコンピューティングオプションはどれですか？", t:"コスト最適化"},
+  {id:"saa_2", a:"S3 Object Lock を「コンプライアンスモード」で有効にし、保持期間を7年に設定する。", q:"企業のコンプライアンス要件により、特定の契約書データを7年間保存する必要があります。この期間中、ルートユーザーを含むいかなるユーザーもデータを削除または上書きしてはいけません。どのS3機能を使用すべきですか？", t:"データ保護"},
+  {id:"saa_3", a:"Amazon Aurora Serverless v2 を使用して、アプリケーションの需要に応じてデータベース容量を自動的にスケーリングさせる。", q:"ECサイトを運営する企業は、予測不能なトラフィックの急増（スパイク）に直面しています。データベース層にはリレーショナルデータベースが必要ですが、事前の容量計画が難しく、アイドル時間のコストを削減したいと考えています。最適なソリューションは？", t:"スケーリング"},
+  {id:"saa_4", a:"AWS Global Accelerator を使用して、ユーザーのトラフィックを最も近いエッジロケーションからAWSグローバルネットワーク経由でルーティングする。", q:"グローバルに展開するゲーム会社は、世界中のユーザーに対してUDPベースのオンラインゲームを提供しています。ネットワークの遅延とジッターを最小限に抑え、安定した接続を提供するための最適なアーキテクチャはどれですか？", t:"ネットワーク高速化"},
+  {id:"saa_5", a:"Amazon FSx for Windows File Server をデプロイし、AWS Directory Service または自己管理型ADと統合する。", q:"ある企業は、オンプレミスのデータセンターとAWS VPCを接続し、社内のWindowsファイルサーバーにあるデータをAWS上のWindowsインスタンスと共有したいと考えています。既存のActive Directory認証を利用する必要があります。推奨されるストレージサービスは？", t:"Windows移行"},
+  {id:"saa_6", a:"Amazon SQS を導入して注文リクエストをキューイングし、バックエンドワーカーが処理可能なペースでメッセージをポーリングする構成にする。", q:"Eコマースアプリケーションにおいて、注文処理システムのバックエンドデータベースが一時的に利用不可になった場合でも、顧客からの注文データを絶対に消失しないようにする必要があります。アプリケーションを疎結合にするための最適な設計は？", t:"疎結合・耐障害性"},
+  {id:"saa_7", a:"AWS Organizations の SCP (Service Control Policy) を使用して、対象のOU（組織単位）に対してリージョン制限ポリシーを一括適用する。", q:"大規模な組織が100以上のAWSアカウントを運用しています。セキュリティチームは、特定のアカウントを除き、すべての未承認リージョンでのリソース作成を禁止したいと考えています。運用負荷を最小限に抑える方法は？", t:"ガバナンス"},
+  {id:"saa_8", a:"Amazon RDS Proxy をデプロイしてデータベース接続をプールし、多数のLambda関数からの接続を効率的に多重化する。", q:"Lambda関数を使用してRDSデータベースにアクセスするアプリケーションがあります。トラフィックのピーク時に、Lambdaが大量に同時実行され、RDSの最大接続数を超過してエラーが発生しています。コードを変更せずに解決するには？", t:"サーバーレスDB接続"},
+  {id:"saa_9", a:"VPC Gateway Endpoint (S3用) を作成し、ルートテーブルを設定してS3へのトラフィックをAWSネットワーク内でルーティングする。", q:"セキュリティ要件の厳しい企業が、プライベートサブネット内のEC2インスタンスからS3バケットへ大量のデータを転送する必要があります。データはインターネットを経由してはならず、コストを最小限に抑える必要があります。", t:"VPCネットワーキング"},
+  {id:"saa_10", a:"AWS WAF (Web Application Firewall) を作成し、適切なWeb ACLルールを設定してALBおよびCloudFrontに関連付ける。", q:"WebアプリケーションへのSQLインジェクションやクロスサイトスクリプティング（XSS）攻撃を防ぐ必要があります。この防御策は、ALB（Application Load Balancer）およびCloudFrontディストリビューションの両方に適用可能である必要があります。", t:"Webセキュリティ"},
+  {id:"saa_11", a:"AWS Fargate を使用して、EC2インスタンスの管理なしでコンテナを実行する。", q:"開発チームは、Dockerコンテナを使用して新しいマイクロサービスをデプロイしたいと考えていますが、OSのパッチ適用やサーバーの管理には時間を割きたくありません。最も運用負荷の低いコンピューティングオプションは？", t:"コンテナ管理"},
+  {id:"saa_12", a:"Amazon S3 Intelligent-Tiering ストレージクラスを使用する。", q:"データレイクに大量のデータが保存されていますが、アクセスパターンが不規則で予測できません。データの取り出し料金を発生させずに、アクセス頻度に応じて自動的にコストを最適化したいと考えています。", t:"ストレージコスト"},
+  {id:"saa_13", a:"AWS Transfer Family を使用して、S3バケットをバックエンドとするSFTPサーバーを構築する。", q:"パートナー企業から、既存のSFTPクライアントを使用して定期的にデータをアップロードしたいという要望があります。サーバーの管理をせずに、アップロードされたデータを即座にS3で利用可能にするには？", t:"レガシー移行"},
+  {id:"saa_14", a:"Amazon Aurora Global Database を使用して、プライマリリージョンからセカンダリリージョンへストレージベースのレプリケーションを行う。", q:"ミッションクリティカルなデータベースがあり、リージョン全体の障害が発生した場合でも、1秒未満のRPO（目標復旧時点）と数分のRTO（目標復旧時間）で復旧できる必要があります。", t:"DR・高可用性"},
+  {id:"saa_15", a:"Application Load Balancer (ALB) を使用し、パスベースのルーティングを設定する。", q:"マイクロサービスアーキテクチャを採用しており、単一のドメイン名で複数のサービス（/orders, /productsなど）にトラフィックを振り分ける必要があります。どのロードバランサー機能を使用すべきですか？", t:"L7ロードバランシング"},
+  {id:"saa_16", a:"AWS Kinesis Data Streams を使用してデータを収集し、Lambdaで処理する。", q:"IoTデバイスから送信される毎秒数千件のクリックストリームデータをリアルタイムで収集し、順序を保証して処理する必要があります。どのサービス構成が適していますか？", t:"リアルタイム分析"},
+  {id:"saa_17", a:"Amazon Elastic File System (EFS) をマウントし、共有ストレージとして使用する。", q:"LinuxベースのCMS（コンテンツ管理システム）を、Auto Scalingグループ内の複数のEC2インスタンスでホストしています。すべてのインスタンスが同時に読み書きできる共有ファイルストレージが必要です。", t:"共有ストレージ"},
+  {id:"saa_18", a:"AWS Secrets Manager を使用してDB認証情報を保存し、自動ローテーションを設定する。", q:"データベースのユーザー名とパスワードをアプリケーションコードにハードコーディングせず、定期的に自動でパスワードを変更してセキュリティを強化したいと考えています。", t:"認証情報管理"},
+  {id:"saa_19", a:"CloudFrontディストリビューションを作成し、S3バケットをオリジンとして設定する。OACでS3への直接アクセスを制限する。", q:"世界中のユーザーに向けて静的なWebサイトを高速に配信したいと考えています。また、S3バケットへの直接アクセスは禁止し、必ずCDNを経由させたいです。", t:"コンテンツ配信"},
+  {id:"saa_20", a:"Amazon Macie を有効にして、バケット内の個人情報（PII）を自動的に検出・分類する。", q:"S3バケットに保存された大量のデータの中に、クレジットカード番号などの機密情報が含まれていないかを定期的にスキャンし、アラートを受け取る仕組みが必要です。", t:"データセキュリティ"},
+
+  // --- 追加の100問以上 (ID: 21-125) ---
+  {id:"saa_21", a:"VPC Peering を設定し、ルートテーブルを更新して相互接続する。", q:"2つの異なるAWSアカウントにあるVPC間で、プライベートIPアドレスを使用して安全に通信する必要があります。インターネットゲートウェイやVPNを使用せずに、最も低遅延でコスト効率の良い接続方法は？", t:"VPC接続"},
+  {id:"saa_22", a:"AWS Storage Gateway (Volume Gateway) の保管型ボリュームモードを使用する。", q:"オンプレミスのアプリケーションサーバーがあり、ローカルに全データを保持しつつ、非同期でAWSにバックアップ（スナップショット）を取りたいと考えています。どのサービスを使用すべきですか？", t:"ハイブリッドストレージ"},
+  {id:"saa_23", a:"IAM ロールを作成し、EC2インスタンスプロファイルとして割り当てる。", q:"EC2インスタンス上で動作するアプリケーションがS3バケットにアクセスする必要があります。アクセスキーとシークレットキーをEC2内に保存するのはセキュリティ上好ましくありません。どうすべきですか？", t:"IAMセキュリティ"},
+  {id:"saa_24", a:"Amazon Route 53 のフェイルオーバールーティングポリシーを設定する。", q:"プライマリサイトとセカンダリ（DR）サイトがあります。通常時はプライマリにトラフィックを流し、ヘルスチェックが失敗した場合のみセカンダリに自動的に切り替えたいと考えています。", t:"DNSルーティング"},
+  {id:"saa_25", a:"NAT Gateway をパブリックサブネットに配置し、プライベートサブネットのルートテーブルを更新する。", q:"プライベートサブネット内のDBサーバーが、OSのアップデートのためにインターネットへアクセスする必要がありますが、外部からの接続は一切許可してはいけません。", t:"VPC設計"},
+  {id:"saa_26", a:"Amazon Cognito User Pools を使用して認証機能を実装する。", q:"モバイルアプリを開発しており、数百万人のユーザーのサインアップ、サインイン、アクセス制御を管理する必要があります。FacebookやGoogleログインもサポートしたいです。", t:"アプリ認証"},
+  {id:"saa_27", a:"AWS DataSync を使用してデータを転送する。", q:"オンプレミスのNASにある50TBのデータを、ネットワーク経由でS3へ迅速かつ安全に移行したいと考えています。転送のスケジュール設定や帯域制御も必要です。", t:"データ移行"},
+  {id:"saa_28", a:"Amazon DynamoDB Accelerator (DAX) を有効にする。", q:"DynamoDBを使用するゲームアプリで、読み取り負荷が非常に高く、マイクロ秒単位の応答速度が求められています。アプリケーションコードを大きく変更せずにパフォーマンスを向上させるには？", t:"DBキャッシュ"},
+  {id:"saa_29", a:"AWS Lambda と Amazon EventBridge (CloudWatch Events) を使用して、スケジュールされた停止・起動を行う。", q:"開発環境のEC2インスタンスを、夜間や週末に自動的に停止してコストを削減したいと考えています。サーバーレスでこれを実装する最も簡単な方法は？", t:"コスト削減"},
+  {id:"saa_30", a:"Amazon Redshift Spectrum を使用して、S3データを直接クエリする。", q:"S3にある数ペタバイトのログデータに対して、ロード処理（ETL）を行わずに直接SQLクエリを実行し、Redshift内のデータと結合して分析したいと考えています。", t:"データ分析"},
+  {id:"saa_31", a:"Application Load Balancer (ALB) でスティッキーセッション（セッションアフィニティ）を有効にする。", q:"ステートフルなWebアプリケーションがあり、ユーザーのセッション情報をローカルディスクに保存しています。同じユーザーからのリクエストが常に同じEC2インスタンスにルーティングされる必要があります。", t:"ELB機能"},
+  {id:"saa_32", a:"AWS Snowball Edge を使用してデータを物理的に輸送する。", q:"インターネット回線が非常に遅い遠隔地から、100TBのデータをAWSに移行する必要があります。ネットワーク経由では数ヶ月かかってしまうため、より高速な移行方法が必要です。", t:"物理データ移行"},
+  {id:"saa_33", a:"Amazon S3 Standard-IA (Infrequent Access) にデータを移行する。", q:"S3に保存されているデータのうち、作成から30日経過したものは滅多にアクセスされませんが、アクセスされた場合はミリ秒単位で即座に取り出す必要があります。", t:"ストレージ階層"},
+  {id:"saa_34", a:"AWS Systems Manager Parameter Store を使用して設定値を保存する。", q:"アプリケーションの設定値（DB接続文字列やAPIキーなど）を階層構造で管理し、暗号化して保存したいと考えています。コストを抑えつつ、バージョン管理も行いたいです。", t:"構成管理"},
+  {id:"saa_35", a:"Amazon Inspector を使用して脆弱性スキャンを行う。", q:"EC2インスタンス上のOSやアプリケーションに、既知の脆弱性（CVE）がないか定期的に自動チェックし、レポートを生成したいと考えています。", t:"セキュリティ監査"},
+  {id:"saa_36", a:"AWS Step Functions を使用してLambda関数をオーケストレーションする。", q:"複数のLambda関数を順番に実行し、条件分岐やエラーハンドリングを含む複雑なワークフローを構築する必要があります。各ステップの状態を可視化して管理するには？", t:"アプリ統合"},
+  {id:"saa_37", a:"Auto Scaling グループのターゲット追跡スケーリングポリシー (Target Tracking Scaling) を使用する。", q:"WebサーバーのCPU使用率を常に約50%に維持するように、負荷に応じて自動的にEC2インスタンス数を増減させたいと考えています。", t:"スケーリング戦略"},
+  {id:"saa_38", a:"Amazon Route 53 の加重ルーティングポリシー (Weighted Routing) を使用する。", q:"新しいバージョンのWebサイトをリリースする際、全トラフィックの10%だけを新バージョンに流し、残りの90%は旧バージョンに流してテストしたいと考えています。", t:"DNSルーティング"},
+  {id:"saa_39", a:"AWS Glue を使用してETLジョブを作成・実行する。", q:"S3にある生データを、分析用に加工・変換（ETL）してRedshiftにロードしたいと考えています。サーバーレスで、スキーマの自動検出機能も利用したいです。", t:"データ処理"},
+  {id:"saa_40", a:"Amazon FSx for Lustre をS3バケットと連携させて使用する。", q:"S3上の大量のデータに対して、HPC（ハイパフォーマンスコンピューティング）や機械学習の処理を行うため、ミリ秒以下のレイテンシと高いスループットを持つファイルシステムが必要です。", t:"高性能ストレージ"},
+  {id:"saa_41", a:"VPC フローログを有効にし、CloudWatch Logs または S3 に配信する。", q:"VPC内のネットワークインターフェースを行き来するIPトラフィックの情報をキャプチャし、セキュリティグループの設定ミスや通信トラブルを調査したいと考えています。", t:"ネットワーク監視"},
+  {id:"saa_42", a:"AWS KMS のカスタマー管理キー (CMK) を使用し、キーポリシーを設定する。", q:"S3内の機密データを暗号化する必要がありますが、暗号化キーの作成、ローテーション、および削除を自社で完全に管理し、監査できるようにする要件があります。", t:"暗号化"},
+  {id:"saa_43", a:"CloudFront の署名付き URL (Signed URL) を発行して配布する。", q:"有料会員向けの動画配信サイトで、S3上の動画コンテンツに対して、特定のユーザーだけが期間限定でアクセスできるように制御したいと考えています。", t:"コンテンツ保護"},
+  {id:"saa_44", a:"Interface VPC Endpoint (AWS PrivateLink) を使用する。", q:"VPC内のEC2から、パブリックインターネットを経由せずに、別のVPCにあるSaaSアプリケーション（NLB背後）に安全に接続したいと考えています。IPアドレスの重複も懸念されます。", t:"PrivateLink"},
+  {id:"saa_45", a:"DynamoDB Streams を有効にし、Lambda関数をトリガーする。", q:"DynamoDBテーブルに新しいアイテムが追加された直後に、そのデータを加工して別のテーブルに保存したり、通知を送ったりする処理をリアルタイムで実行したいです。", t:"DBイベント処理"},
+  {id:"saa_46", a:"AWS Direct Connect Gateway を使用する。", q:"1つのDirect Connect接続を使用して、異なるリージョンにある複数のVPCに接続したいと考えています。管理を簡素化するための最適なコンポーネントは？", t:"ハイブリッド接続"},
+  {id:"saa_47", a:"Network Load Balancer (NLB) を使用する。", q:"毎秒数百万リクエストのスパイクを処理でき、固定IPアドレス（Static IP）が必要なTCPベースのアプリケーションの負荷分散を行う必要があります。", t:"L4ロードバランシング"},
+  {id:"saa_48", a:"Amazon S3 Glacier Instant Retrieval を使用する。", q:"医療画像を保存する必要があります。アクセス頻度は非常に低いですが、必要になった場合はミリ秒単位で即座に取り出せる必要があります。ストレージコストを最優先に考えた場合、最適なクラスは？", t:"S3アーカイブ"},
+  {id:"saa_49", a:"EC2 Dedicated Hosts (専有ホスト) を使用する。", q:"既存のソフトウェアライセンス（ソケット単位、コア単位など）をAWSに持ち込む必要があり、物理サーバーを占有するコンプライアンス要件があります。", t:"EC2テナンシー"},
+  {id:"saa_50", a:"Amazon GuardDuty を有効にして脅威を検知する。", q:"AWSアカウント内での不審なアクティビティ（APIコールの異常、マイニング行為、悪意あるIPとの通信など）を、機械学習を用いて自動的に検知したいと考えています。", t:"脅威検知"},
+  {id:"saa_51", a:"AWS Transit Gateway を使用してVPC間およびVPNを相互接続する。", q:"数十個のVPCがあり、それぞれを相互に接続する必要があります。VPCピアリングによるフルメッシュ構成は管理が複雑すぎるため、ハブアンドスポーク型で一元管理したいです。", t:"ネットワーク集約"},
+  {id:"saa_52", a:"AWS Config を使用して構成変更を記録・評価する。", q:"リソースの設定変更履歴をタイムラインで追跡し、セキュリティグループのポート開放など、コンプライアンス違反の設定変更があった場合に検知・通知したい。", t:"構成管理・監査"},
+  {id:"saa_53", a:"Amazon Athena を使用してS3データをSQLでクエリする。", q:"S3に保存されたCSVやJSON形式のログファイルに対して、サーバーを立ち上げることなく、標準SQLを使ってアドホックな分析を行いたいと考えています。", t:"サーバーレス分析"},
+  {id:"saa_54", a:"Elastic Fabric Adapter (EFA) を有効にしたEC2インスタンスを使用する。", q:"HPC（ハイパフォーマンスコンピューティング）や機械学習の分散学習において、ノード間の通信遅延を極限まで下げる必要があります。OSバイパス機能が必要です。", t:"HPCネットワーク"},
+  {id:"saa_55", a:"クロスリージョンレプリケーション (CRR) を設定する。", q:"コンプライアンス要件により、S3バケット内のデータを、地理的に離れた別のAWSリージョンに自動的にコピーしてバックアップする必要があります。", t:"S3レプリケーション"},
+  {id:"saa_56", a:"AWS Client VPN を使用する。", q:"リモートワーク中の従業員が、自宅から安全にAWS VPC内のプライベートリソースにアクセスできるようにする必要があります。OpenVPNベースのクライアントを使用したいです。", t:"リモートアクセス"},
+  {id:"saa_57", a:"Compute Savings Plans を購入する。", q:"FargateとEC2を組み合わせて使用しており、今後1〜3年は安定した稼働が見込まれます。インスタンスファミリーやリージョンに縛られず、最も柔軟にコストを削減できるプランは？", t:"コスト削減プラン"},
+  {id:"saa_58", a:"Amazon MQ を使用する。", q:"オンプレミスでActiveMQやRabbitMQを使用しているアプリケーションを、コードの書き換えを最小限にしてAWSに移行したいと考えています。", t:"メッセージング移行"},
+  {id:"saa_59", a:"AWS WAF のレートベースのルールを設定する。", q:"特定のIPアドレスから、5分間に2000回以上のリクエストが来た場合に自動的にブロックし、WebサイトへのDDoS攻撃（HTTP Flood）を防ぎたい。", t:"WAF設定"},
+  {id:"saa_60", a:"Amazon Kinesis Data Firehose を使用する。", q:"ストリーミングデータを収集し、圧縮・フォーマット変換を行った上で、S3やRedshiftに自動的に保存したいです。コードを書かずに設定のみで実現するには？", t:"データ配信"},
+  {id:"saa_61", a:"AWS Backup を使用してバックアッププランを作成する。", q:"EBS、RDS、DynamoDB、EFSなど、複数のサービスのバックアップスケジュールを一元管理し、監査レポートを作成する必要があります。", t:"バックアップ統合"},
+  {id:"saa_62", a:"IAM ポリシー条件で aws:RequestedRegion を使用する。", q:"特定のIAMユーザーやロールに対して、東京リージョン（ap-northeast-1）以外でのリソース作成を禁止したいと考えています。", t:"IAM条件"},
+  {id:"saa_63", a:"Spread Placement Group (分散プレイスメントグループ) を使用する。", q:"少数の重要なEC2インスタンスがあり、ハードウェア障害の影響を同時に受けないように、それぞれ異なるラック（ハードウェア）に配置する必要があります。", t:"EC2配置戦略"},
+  {id:"saa_64", a:"Amazon Detective を使用して根本原因を調査する。", q:"GuardDutyでセキュリティアラートが検出されました。関連するIPアドレスやAWSリソースの過去の振る舞いをグラフで可視化し、インシデントの調査を効率化したいです。", t:"セキュリティ調査"},
+  {id:"saa_65", a:"EC2 Instance Store (インスタンスストア) を使用する。", q:"一時的なデータを保存するキャッシュサーバーやバッファとしてEC2を使用します。データの永続性は不要ですが、最高のディスクI/Oパフォーマンスが必要です。", t:"一時ストレージ"},
+  {id:"saa_66", a:"AWS X-Ray を導入してトレーシングを行う。", q:"マイクロサービスアーキテクチャにおいて、リクエストが複数のサービスを通過する際の遅延箇所やエラーの原因を特定（デバッグ）したいと考えています。", t:"アプリ分析"},
+  {id:"saa_67", a:"Gateway Load Balancer (GWLB) を使用する。", q:"サードパーティ製のファイアウォールアプライアンス（仮想アプライアンス）をVPCに導入し、トラフィックを透過的に検査したいと考えています。スケーラビリティと可用性を確保する構成は？", t:"ネットワーク検査"},
+  {id:"saa_68", a:"S3 Transfer Acceleration を有効にする。", q:"世界中のユーザーがS3バケットに大容量ファイルをアップロードする必要がありますが、インターネット経由では遅延が大きいです。AWSのエッジロケーションを活用して高速化するには？", t:"S3高速化"},
+  {id:"saa_69", a:"AWS CloudFormation StackSets を使用する。", q:"複数のAWSアカウント、複数のリージョンに対して、同一のインフラ構成（VPCやIAMロールなど）を一度の操作で展開・管理したいと考えています。", t:"IaC・展開"},
+  {id:"saa_70", a:"Amazon CloudFront の Origin Shield を有効にする。", q:"CDNを使用していますが、キャッシュミスが発生した際にオリジンサーバー（S3やALB）への負荷が集中しています。オリジンへのリクエスト数をさらに削減するには？", t:"CDN最適化"},
+  {id:"saa_71", a:"AWS Security Hub を有効にしてアラートを集約する。", q:"GuardDuty、Inspector、Macieなどの複数のセキュリティサービスからのアラートを一元的に表示し、セキュリティ基準（CISなど）に対する準拠状況をスコア化したい。", t:"セキュリティ統合"},
+  {id:"saa_72", a:"AWS Resource Access Manager (RAM) を使用する。", q:"Transit GatewayやSubnetなどのAWSリソースを、組織内の他のAWSアカウントと共有し、リソースの重複作成を避けてコストを削減したい。", t:"リソース共有"},
+  {id:"saa_73", a:"Amazon EMR (Elastic MapReduce) を使用する。", q:"Hadoop、Spark、Hiveなどのオープンソースフレームワークを使用して、ペタバイト級のビッグデータ処理を行いたいです。クラスターの管理はAWSに任せたいです。", t:"ビッグデータ"},
+  {id:"saa_74", a:"Launch Template (起動テンプレート) を作成し、ASGで使用する。", q:"Auto Scalingグループで新しいバージョンのAMIやインスタンスタイプを使用したいです。起動設定（Launch Configuration）は古い機能のため、新しい機能をサポートする方法に切り替えたい。", t:"EC2起動設定"},
+  {id:"saa_75", a:"Amazon Elastic Container Registry (ECR) にイメージを保存する。", q:"Dockerコンテナイメージを保存・管理するための、高可用性でセキュアなプライベートレジストリが必要です。ECSやEKSとシームレスに統合できる必要があります。", t:"コンテナレジストリ"},
+  {id:"saa_76", a:"AWS VPN CloudHub を構成する。", q:"複数の支店（リモートサイト）があり、それぞれがAWSとVPN接続しています。支店同士がAWSを経由して、ハブアンドスポーク型で互いに通信できるようにしたいです。", t:"VPN構成"},
+  {id:"saa_77", a:"AWS Cost and Usage Report (CUR) を作成し、S3に保存してAthenaで分析する。", q:"AWSの請求情報を最も詳細なレベル（時間単位、リソースID単位）で取得し、SQLクエリを使用してカスタムなコスト分析レポートを作成したい。", t:"コスト分析"},
+  {id:"saa_78", a:"Amazon QuickSight を使用してデータを可視化する。", q:"S3やRedshiftにあるビジネスデータを、グラフやダッシュボードで可視化し、社内の意思決定者に共有したい。サーバー管理はしたくない。", t:"BIツール"},
+  {id:"saa_79", a:"Amazon CloudWatch Logs Insights を使用してログを検索する。", q:"CloudWatch Logsに保存された大量のアプリケーションログから、特定のエラーコードを含む行を素早く検索・集計したい。専用のクエリ構文を使いたい。", t:"ログ分析"},
+  {id:"saa_80", a:"Multi-AZ 配置の RDS を使用し、リードレプリカを追加する。", q:"DBの可用性を高めるために自動フェイルオーバーが必要ですが、同時に読み取りトラフィックが増加しており、プライマリDBの負荷を軽減する必要があります。", t:"DB設計"},
+  {id:"saa_81", a:"AWS PrivateLink for S3 (Interface Endpoint) を使用する。", q:"オンプレミスからDirect Connect経由でS3にアクセスしたいですが、パブリックVIFではなくプライベートVIFを使用しており、S3へのプライベートIPでのアクセスが必要です。", t:"S3アクセス"},
+  {id:"saa_82", a:"EC2 Hibernate (ハイバネーション) を有効にする。", q:"EC2インスタンスを停止する際、メモリ内のデータをディスクに保存し、再起動時に高速にメモリ状態を復元したい。アプリケーションの起動に時間がかかるためです。", t:"EC2機能"},
+  {id:"saa_83", a:"Amazon EventBridge Scheduler を使用する。", q:"定期的なバッチ処理やメンテナンス再起動など、数千万件のスケジュールタスクを大規模に管理・実行する必要があります。Cron式やタイムゾーン指定が必要です。", t:"スケジューリング"},
+  {id:"saa_84", a:"AWS Key Management Service (KMS) のキーローテーションを有効にする。", q:"規制要件により、保存データの暗号化に使用する鍵（KMSキー）を1年ごとに自動的に更新（ローテーション）する必要があります。", t:"KMS運用"},
+  {id:"saa_85", a:"S3 Glacier Flexible Retrieval (旧Glacier) を使用する。", q:"アーカイブデータで、通常はアクセスしませんが、必要時は数分から数時間以内で取り出せれば十分です。Deep Archiveよりは早く、Standardより安くしたい。", t:"アーカイブ"},
+  {id:"saa_86", a:"Route 53 の位置情報ルーティングポリシー (Geolocation Routing) を使用する。", q:"ヨーロッパのユーザーにはフランクフルトのサーバー、日本のユーザーには東京のサーバーというように、アクセス元の国や地域に基づいて特定のサーバーに誘導したい。", t:"DNSルーティング"},
+  {id:"saa_87", a:"AWS Storage Gateway (Tape Gateway) を使用する。", q:"オンプレミスのバックアップシステム（物理テープライブラリ）を廃止し、既存のバックアップソフトを変更せずに、データをAWSのGlacierなどに保存したい。", t:"テープ移行"},
+  {id:"saa_88", a:"Aurora のクローン (Cloning) 機能を使用する。", q:"本番環境のAuroraデータベースのデータを使用して、テスト環境用のDBを数分で作成したい。データコピーの時間をかけず、ストレージ容量も節約したい。", t:"Aurora機能"},
+  {id:"saa_89", a:"IAM Access Analyzer を使用して外部アクセスを検証する。", q:"S3バケットやIAMロールが、意図せず外部（他のAWSアカウントやパブリック）からアクセス可能になっていないか、ポリシーを分析して確認したい。", t:"アクセス権限確認"},
+  {id:"saa_90", a:"Amazon CloudFront の署名付きCookie (Signed Cookies) を使用する。", q:"HLS形式の動画ストリーミング配信を行っており、多数のファイル（.m3u8, .ts）へのアクセス権を一括で制御したい。URLごとに署名するのは非効率です。", t:"配信セキュリティ"},
+  {id:"saa_91", a:"AWS Secrets Manager で RDS の認証情報を管理する。", q:"Lambda関数からRDSに接続する際、パスワードをコードに埋め込むのではなく、安全に取得し、さらに定期的に自動ローテーションさせたい。", t:"認証情報"},
+  {id:"saa_92", a:"AWS Prescriptive Guidance を参照する。", q:"AWSへの移行プロジェクトを開始するにあたり、AWSが推奨する戦略、ガイド、パターンなどのベストプラクティス集を確認したい。", t:"移行ガイド"},
+  {id:"saa_93", a:"AWS Compute Optimizer を使用してリソースを最適化する。", q:"稼働中のEC2インスタンスが過剰なスペックになっていないか、あるいはスペック不足でないかを機械学習で分析し、最適なインスタンスタイプを提案してほしい。", t:"リソース最適化"},
+  {id:"saa_94", a:"Amazon ECS Anywhere を使用する。", q:"AWS上のECSと同じコンテナオーケストレーションの仕組みを使って、オンプレミスのサーバー上でもコンテナを管理・実行したい。", t:"ハイブリッドコンテナ"},
+  {id:"saa_95", a:"AWS App Runner を使用してデプロイする。", q:"コンテナ化されたWebアプリケーションを、インフラやオーケストレーターの設定を一切せずに、ソースコードまたはコンテナイメージから数クリックでデプロイ・運用したい。", t:"簡易コンテナ"},
+  {id:"saa_96", a:"Amazon Keyspaces (for Apache Cassandra) を使用する。", q:"オンプレミスで稼働しているApache Cassandraのワークロードを、サーバーレスかつスケーラブルなAWSのマネージドサービスに移行したい。", t:"DB移行"},
+  {id:"saa_97", a:"AWS WAF の Bot Control ルールグループを有効にする。", q:"Webサイトに対して、スクレイピングや在庫転売などを目的とした自動化されたボット（Bot）からのアクセスを識別し、ブロックまたはレート制限したい。", t:"ボット対策"},
+  {id:"saa_98", a:"Amazon Route 53 Resolver Outbound Endpoint を使用する。", q:"AWS VPC内のEC2インスタンスから、オンプレミスのデータセンターにあるDNSサーバーの名前解決を行いたい（オンプレミスのドメイン名を解決したい）。", t:"ハイブリッドDNS"},
+  {id:"saa_99", a:"S3 Batch Operations を使用する。", q:"S3バケット内にある数百万個のオブジェクトに対して、タグの付与や、Glacierへの復元、Lambda関数の実行などの処理を一括で行いたい。", t:"S3一括処理"},
+  {id:"saa_100", a:"AWS Fault Injection Simulator (FIS) を使用する。", q:"本番環境やテスト環境で意図的に障害（サーバーダウン、遅延など）を発生させ、システムの耐障害性や復旧能力をテスト（カオスエンジニアリング）したい。", t:"カオスエンジニアリング"},
+  {id:"saa_101", a:"Amazon CloudWatch Synthetics (Canary) を使用する。", q:"Webアプリケーションの主要なAPIエンドポイントやURLに対して、24時間365日、スクリプトを実行して正常に動作しているか（死活監視＋UX監視）を確認したい。", t:"外形監視"},
+  {id:"saa_102", a:"AWS Control Tower を使用してランディングゾーンをセットアップする。", q:"新しいマルチアカウント環境を構築するにあたり、AWSのベストプラクティスに基づいたセキュリティ設定、ログ集約、アカウント管理の仕組み（Landing Zone）を自動的に展開したい。", t:"アカウント管理"},
+  {id:"saa_103", a:"Amazon FSx for NetApp ONTAP を使用する。", q:"オンプレミスで使用しているNetApp ONTAPストレージのデータ管理機能（SnapMirrorなど）を維持したまま、AWS上のフルマネージドストレージに移行したい。", t:"ストレージ移行"},
+  {id:"saa_104", a:"Partition Placement Group (パーティションプレイスメントグループ) を使用する。", q:"HDFS、HBase、Cassandraなどの分散システムをEC2で動かす際、異なるラックにインスタンスを分散させ、ハードウェア障害の影響を局所化したい。", t:"EC2配置"},
+  {id:"saa_105", a:"AWS Shield Standard (デフォルトで有効) に依存する。", q:"Webサイトを構築中ですが、追加コストをかけずに、一般的なL3/L4レベルのDDoS攻撃から保護されたいと考えています。特別な設定はしたくない。", t:"DDoS対策"},
+  {id:"saa_106", a:"Amazon Cognito Identity Pools (Federated Identities) を使用する。", q:"認証済みのユーザー（Googleログインなど）に対して、S3バケットへの直接アップロード権限など、一時的なAWSアクセスキーを付与したい。", t:"権限付与"},
+  {id:"saa_107", a:"AWS Budget Actions を設定する。", q:"月額の予算を設定し、コストが予算の80%を超えた時点で、開発用のEC2インスタンスを自動的に停止するなどのアクションを実行させたい。", t:"コスト管理"},
+  {id:"saa_108", a:"Amazon VPC Reachability Analyzer を使用する。", q:"VPC内の2つのインスタンス間で通信ができないトラブルが発生しています。セキュリティグループやルートテーブルなどの設定を分析し、到達可能性を診断したい。", t:"ネットワーク診断"},
+  {id:"saa_109", a:"AWS Data Exchange を使用する。", q:"サードパーティが提供するデータセット（金融データ、気象データなど）を、S3バケットに直接サブスクライブして利用したい。API連携の実装は避けたい。", t:"データ活用"},
+  {id:"saa_110", a:"Amazon DocumentDB (with MongoDB compatibility) を使用する。", q:"MongoDBで構築されたデータベースを、AWSのフルマネージドサービスに移行したい。アプリケーションコードの変更は最小限に抑えたい。", t:"NoSQL移行"},
+  {id:"saa_111", a:"AWS Site-to-Site VPN を使用して接続し、VPN Acceleration を有効にする。", q:"オンプレミスとAWSをVPNで接続していますが、距離が遠く通信速度が不安定です。AWSのエッジロケーションを活用してVPN通信を高速化したい。", t:"VPN高速化"},
+  {id:"saa_112", a:"AWS Outposts を導入する。", q:"工場の生産ライン制御システムなど、超低遅延が求められるアプリをAWSのAPIを使って構築したいが、データ処理は物理的にオンプレミス（工場内）で行う必要がある。", t:"ハイブリッドクラウド"},
+  {id:"saa_113", a:"Amazon Neptune を使用する。", q:"SNSの「友人関係」や、商品リコメンデーションのような、高度に接続されたデータセット（グラフデータ）を扱うアプリケーションを構築したい。", t:"グラフDB"},
+  {id:"saa_114", a:"Amazon S3 Select を使用して必要なデータのみを取得する。", q:"S3にある巨大なCSVファイルから、特定の条件に合う行だけをアプリケーションで取得したい。ファイル全体をダウンロードするコストと時間を削減したい。", t:"S3効率化"},
+  {id:"saa_115", a:"EC2 Instance Connect を使用する。", q:"SSHキーペアを管理したり、パブリックIPを公開したりせずに、ブラウザベースのSSHクライアントやCLIからEC2インスタンスに安全に接続したい。", t:"EC2接続"},
+  {id:"saa_116", a:"AWS Elastic Disaster Recovery (AWS DRS) を使用する。", q:"オンプレミスのサーバーをAWSに継続的にレプリケーションし、災害発生時にはAWS上で即座にリカバリインスタンスを起動するDR環境を低コストで構築したい。", t:"DRソリューション"},
+  {id:"saa_117", a:"Amazon CloudFront の Geo Restriction (地域制限) を設定する。", q:"著作権の制限により、配信するコンテンツを特定の国（ホワイトリスト）のユーザーのみに許可し、それ以外の国からのアクセスはブロックしたい。", t:"アクセス制御"},
+  {id:"saa_118", a:"AWS Network Firewall をVPCにデプロイする。", q:"VPCに出入りするトラフィックに対して、ドメイン名フィルタリングやIPS（侵入防止システム）などの高度なネットワーク保護を全般的に適用したい。", t:"ネットワーク防御"},
+  {id:"saa_119", a:"Amazon EventBridge Pipes を使用する。", q:"SQSキューからメッセージを受け取り、フィルタリングや変換を行った上で、Step Functionsワークフローを開始したい。これをつなぐためのLambda関数を書きたくない。", t:"サーバーレス連携"},
+  {id:"saa_120", a:"Amazon Timestream を使用する。", q:"IoTセンサーからの時系列データや、アプリのログデータなど、時間とともに蓄積される大量のデータを高速に保存・分析するための専用DBが必要。", t:"時系列DB"},
+  {id:"saa_121", a:"AWS Verified Access を使用する。", q:"VPNを使用せずに、企業ポリシー（PCのセキュリティ状態など）に基づいて、社内アプリケーションへの安全なリモートアクセスを提供したい（ゼロトラスト）。", t:"ゼロトラスト"},
+  {id:"saa_122", a:"Amazon Route 53 Resolver DNS Firewall を使用する。", q:"VPC内からのDNSクエリを監視し、悪意のあるドメインリストへのアクセスをDNSレベルでブロックしたい。", t:"DNSセキュリティ"},
+  {id:"saa_123", a:"AWS Lambda SnapStart を有効にする (Java関数など)。", q:"Javaで書かれたLambda関数のコールドスタート（初期起動）が遅く、ユーザー体験に影響しています。コードを変更せずに起動時間を劇的に高速化したい。", t:"Lambda最適化"},
+  {id:"saa_124", a:"Cluster Placement Group (クラスタープレイスメントグループ) を使用する。", q:"単一のアベイラビリティーゾーン内で、複数のEC2インスタンス間で低遅延・高帯域幅の通信が必要なHPCアプリケーションを実行したい。", t:"HPC配置"},
+  {id:"saa_125", a:"Amazon S3 Multi-Region Access Point を使用する。", q:"複数のリージョンに複製されたS3バケットがあり、ユーザーを最も遅延の少ないリージョンのバケットに自動的にルーティングして、ダウンロード速度を向上させたい。", t:"S3グローバル"}
+];
 
 // 3. SAP Scenario
 const sapData=[{id:"sap_1",a:"AWS Transit Gateway を使用してハブアンドスポーク構成を作成し、各リージョン間をピアリング接続する。",q:"グローバル企業が50以上のVPCとオンプレミス環境を相互接続する必要があります。フルメッシュのVPN接続は管理が困難になっています。ネットワーク構成を簡素化し、一元管理するための推奨アーキテクチャは？",t:"高度なネットワーキング"},{id:"sap_2",a:"ログ専用のAWSアカウントを作成し、Organization Trailを使用して全アカウントのログをS3バケットに集約する。S3 Object Lockで改ざんを防止する。",q:"セキュリティ監査のため、組織内のすべてのAWSアカウントのCloudTrailログとConfigログを一箇所に集約し、誰も変更できない状態で保存する必要があります。ベストプラクティスは？",t:"マルチアカウントセキュリティ"},{id:"sap_3",a:"Direct Connect リンク上で MACsec 暗号化を使用する。",q:"オンプレミスとAWS間を10GbpsのDirect Connectで接続しています。コンプライアンス要件によりデータは暗号化される必要がありますが、IPsec VPNでは帯域幅のオーバーヘッドが許容できません。物理層での暗号化を実現するには？",t:"Direct Connect"},{id:"sap_4",a:"BYOIP (Bring Your Own IP) を使用して、自社のパブリックIPアドレス範囲をAWSに持ち込む。",q:"レガシーアプリケーションをAWSに移行中ですが、クライアント側のファイアウォール設定により、接続先IPアドレスを変更することができません。AWSでもオンプレミスと同じパブリックIPを使用し続けるには？",t:"移行・IP管理"},{id:"sap_5",a:"Amazon Aurora Global Database を使用し、書き込み転送（Write Forwarding）機能を有効にする。",q:"グローバルに展開するアプリケーションで、各リージョンのユーザーに低遅延な読み取りを提供しつつ、セカンダリリージョンからの書き込みも可能にしたいと考えています。アプリケーションの改修を最小限にするDB構成は？",t:"グローバルDB"}];
 
-// --- ダミーデータ生成 ---
+// --- ダミー生成用（エンドレスモードのみ使用） ---
 const extendedSaaData = [];
+// エンドレスモード用にSAAデータをループさせてストックを増やす（15問コースでは使わない）
 for(let i=0; i<10; i++) {
     saaData.forEach((item, index) => {
         extendedSaaData.push({ id: `saa_gen_${i}_${index}`, q: item.q, a: item.a, t: item.t });
@@ -216,7 +338,6 @@ let appState = { mode: '', questions: [], currentIndex: 0, correctCount: 0, wron
 document.addEventListener('DOMContentLoaded', () => {
     try {
         checkSession();
-        // 初期表示でホーム画面を強制的に出す（ホワイトスクリーン対策）
         document.getElementById('homeScreen').classList.add('active');
     } catch(e) {
         console.error(e);
@@ -243,10 +364,16 @@ function startCourse(mode) {
     let pool = [];
     if (mode === 'vocab_endless') {
         pool = shuffle([...vocabData]);
-    } else if (mode.startsWith('saa')) {
+    } else if (mode === 'saa_15') {
+        // ★重要: ユニークなデータセットから抽出
+        pool = shuffle([...saaData]).slice(0, 15);
+    } else if (mode === 'saa_30') {
+        // 30問モードはSAAデータ(20問) + 不足分を水増しデータから補充
+        let base = shuffle([...saaData]);
+        let extra = shuffle([...extendedSaaData]).slice(0, 10);
+        pool = [...base, ...extra];
+    } else if (mode === 'saa_endless') {
         pool = shuffle([...extendedSaaData]);
-        if (mode === 'saa_15') pool = pool.slice(0, 15);
-        if (mode === 'saa_30') pool = pool.slice(0, 30);
     } else if (mode === 'sap') {
         pool = shuffle([...sapData]);
     }
@@ -281,15 +408,32 @@ function renderQuestion() {
     const optionsArea = document.getElementById('optionsArea');
     optionsArea.innerHTML = '';
     
+    // --- 選択肢生成ロジック (重複回避版) ---
     let options = [{ text: q.a, isCorrect: true }];
+    
+    // ダミーのプール選択
     let distractorPool;
     if(appState.mode === 'vocab_endless') distractorPool = vocabData;
     else if(appState.mode === 'sap') distractorPool = sapData;
-    else distractorPool = extendedSaaData;
+    else distractorPool = saaData; // SAAのダミーは常にユニークなSAAデータから取る
 
-    let distractors = distractorPool.filter(d => d.id !== q.id);
-    distractors = shuffle(distractors).slice(0, 3);
-    distractors.forEach(d => options.push({ text: d.a, isCorrect: false }));
+    // ★重要: 正解と同じ文章を持つダミーを除外する
+    let candidates = distractorPool.filter(d => d.a !== q.a);
+    candidates = shuffle(candidates);
+    
+    // ユニークなダミーを3つ選ぶ
+    const selectedDistractors = [];
+    const seenAnswers = new Set([q.a]); // 正解の文章をセットに追加
+
+    for (let d of candidates) {
+        if (!seenAnswers.has(d.a)) {
+            selectedDistractors.push(d);
+            seenAnswers.add(d.a);
+        }
+        if (selectedDistractors.length >= 3) break;
+    }
+
+    selectedDistractors.forEach(d => options.push({ text: d.a, isCorrect: false }));
 
     shuffle(options).forEach((opt, idx) => {
         const btn = document.createElement('div');
@@ -309,6 +453,8 @@ function checkAnswer(btn, option, qData) {
     const feedback = document.getElementById('feedbackArea');
     const explanation = document.getElementById('explanationText');
     const allBtns = document.querySelectorAll('.option-btn');
+    
+    // 選択肢判定 (テキスト比較)
     allBtns.forEach(b => { if (b.innerText.includes(qData.a)) b.classList.add('correct'); });
 
     if (option.isCorrect) {
