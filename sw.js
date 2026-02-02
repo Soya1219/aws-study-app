@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aws-master-v1';
+const CACHE_NAME = 'aws-master-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -24,4 +24,5 @@ self.addEventListener('fetch', (event) => {
       return response || fetch(event.request);
     })
   );
+
 });
