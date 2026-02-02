@@ -323,17 +323,36 @@
       addToList(WEAK_KEY, q.id);
     }
   
-    const point = getLocalizedText(q.t || q.f);
-    document.getElementById('explanationText').innerHTML = `
-      <strong>${t.solution}:</strong><br>${trueAns}<br><br>
-      <span style="font-size:13px;color:#555;">${t.point}: ${point}</span>
-      <div style="margin-top:20px; min-height:200px; background:#f9f9f9; border:1px dashed #ccc; text-align:center; display:flex; align-items:center; justify-content:center;">
-         <span style="color:#aaa; font-size:12px;">Advertisement (ここにAdSense)</span>
-      </div>
-    `;
-    fb.style.display = 'block';
-    fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    saveSession();
+
+  const point = getLocalizedText(q.t || q.f);
+  
+  document.getElementById('explanationText').innerHTML = `
+    <strong>${t.solution}:</strong><br>${trueAns}<br><br>
+    <span style="font-size:13px;color:#555;">${t.point}: ${point}</span>
+    
+    <div style="margin-top:30px; min-height:250px; text-align:center; overflow:hidden;">
+       <span style="font-size:10px; color:#ccc; display:block; margin-bottom:5px;">SPONSORED</span>
+       
+       <ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="ca-pub-7804916394997850"
+            data-ad-slot="YOUR_AD_SLOT_ID" 
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+       </div>
+  `;
+
+  try {
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+  } catch (e) {
+    console.error("AdSense error:", e);
+  }
+
+  fb.style.display = 'block';
+  fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  saveSession();
+
+
   
     const isLast = appState.currentIndex >= appState.questions.length - 1;
     const isEndless = appState.mode.includes('endless') || appState.mode.includes('vocab') || appState.mode === 'weakness' || appState.mode === 'bookmark';
@@ -413,4 +432,5 @@
     const d = localStorage.getItem(SESSION_KEY);
     if(d) { appState = JSON.parse(d); showScreen('quizScreen'); renderQuestion(); }
   }
+
   function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
