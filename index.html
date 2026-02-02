@@ -26,6 +26,23 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7804916394997850"
      crossorigin="anonymous"></script>
 </head>
+<body>
+<div class="app-container">
+  <header class="app-header">
+    <div class="logo">AWS <span>Master</span></div>
+    <div class="header-controls">
+      <div id="quizTimer" class="timer-display">00:00</div>
+      <select id="langSelect" class="lang-select" onchange="changeLanguage(this.value)">
+        <option value="ja">🇯🇵</option>
+        <option value="en">🇺🇸</option>
+        <option value="zh">🇨🇳</option>
+        <option value="es">🇪🇸</option>
+      </select>
+      <button id="quitBtn" class="btn-quit hidden" onclick="goHome()">
+        <span data-t="quit">✕</span>
+      </button>
+    </div>
+  </header>
 
   <div id="homeScreen" class="screen">
     <div class="home-title" data-t="home_title">学習モード選択</div>
@@ -190,5 +207,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
-
