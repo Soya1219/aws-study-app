@@ -323,36 +323,36 @@
       addToList(WEAK_KEY, q.id);
     }
   
-
-  const point = getLocalizedText(q.t || q.f);
-  
-  document.getElementById('explanationText').innerHTML = `
-    <strong>${t.solution}:</strong><br>${trueAns}<br><br>
-    <span style="font-size:13px;color:#555;">${t.point}: ${point}</span>
+    const point = getLocalizedText(q.t || q.f);
     
-    <div style="margin-top:30px; min-height:250px; text-align:center; overflow:hidden;">
-       <span style="font-size:10px; color:#ccc; display:block; margin-bottom:5px;">SPONSORED</span>
-       
-       <ins class="adsbygoogle"
-            style="display:block"
-            data-ad-client="ca-pub-7804916394997850"
-            data-ad-slot="9152404899" 
-            data-ad-format="auto"
-            data-full-width-responsive="true"></ins>
-       </div>
-  `;
+    // ▼▼▼ AdSense広告挿入（記事内広告・In-article） ▼▼▼
+    document.getElementById('explanationText').innerHTML = `
+      <strong>${t.solution}:</strong><br>${trueAns}<br><br>
+      <span style="font-size:13px;color:#555;">${t.point}: ${point}</span>
+      
+      <div style="margin-top:30px; text-align:center; min-height: 250px;">
+        <span style="font-size:10px; color:#ccc; display:block; margin-bottom:5px;">SPONSORED</span>
+        
+        <ins class="adsbygoogle"
+             style="display:block; text-align:center;"
+             data-ad-layout="in-article"
+             data-ad-format="fluid"
+             data-ad-client="ca-pub-7804916394997850"
+             data-ad-slot="9152404899"></ins>
+      </div>
+    `;
 
-  try {
-    (window.adsbygoogle = window.adsbygoogle || []).push({});
-  } catch (e) {
-    console.error("AdSense error:", e);
-  }
-
-  fb.style.display = 'block';
-  fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  saveSession();
-
-
+    // 広告表示トリガー
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.error("AdSense error:", e);
+    }
+    // ▲▲▲ AdSense終了 ▲▲▲
+  
+    fb.style.display = 'block';
+    fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    saveSession();
   
     const isLast = appState.currentIndex >= appState.questions.length - 1;
     const isEndless = appState.mode.includes('endless') || appState.mode.includes('vocab') || appState.mode === 'weakness' || appState.mode === 'bookmark';
@@ -432,6 +432,4 @@
     const d = localStorage.getItem(SESSION_KEY);
     if(d) { appState = JSON.parse(d); showScreen('quizScreen'); renderQuestion(); }
   }
-
   function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-
