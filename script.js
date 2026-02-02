@@ -336,7 +336,7 @@
        <ins class="adsbygoogle"
             style="display:block"
             data-ad-client="ca-pub-7804916394997850"
-            data-ad-slot="YOUR_AD_SLOT_ID" 
+            data-ad-slot="9152404899" 
             data-ad-format="auto"
             data-full-width-responsive="true"></ins>
        </div>
@@ -434,3 +434,4 @@
   }
 
   function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
