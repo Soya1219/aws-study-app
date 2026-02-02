@@ -1,0 +1,20 @@
+{
+  "name": "AWS Master v2.0",
+  "short_name": "AWS Master",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#232f3e",
+  "icons": [
+    {
+      "src": "ogp.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "ogp.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
