@@ -34,7 +34,7 @@
   let vocabClfData = [], vocabSaaData = [], vocabSapData = [];
   let clfData = [], saaData = [], sapData = [], allData = [];
   
-  // 翻訳データ (日/英のみに整理)
+  // 翻訳データ
   const TRANSLATIONS = {
     ja: {
       quit: "中断", home_title: "学習モード選択", home_subtitle: "基礎から実践まで完全網羅", resume: "再開",
@@ -74,26 +74,24 @@
   });
   
   // JSON読み込み関数
-// JSON読み込み関数
   async function loadExternalData() {
      try {
        const response = await fetch('./data.json');
        if (!response.ok) throw new Error("JSON not found");
        const data = await response.json();
        
-       // Vocabデータの展開（ここは固定でOK）
+       // Vocabデータの展開
        vocabClfData = expandArray(data.vocabClf, 30);
        vocabSaaData = expandArray(data.vocabSaa, 30);
        vocabSapData = expandArray(data.vocabSap, 30);
        
        // シナリオデータの展開
-       // ★変更点: JSONの中身が多い場合は、その数をそのまま使うように変更
+       // データが空でもエラーにならないよう [] で初期化
        const baseClf = data.baseClf || [];
        const baseSaa = data.baseSaa || [];
        const baseSap = data.baseSap || [];
 
-       // 目標問題数（最低でもこれだけは用意する数）
-       // データがこれより多ければ、データの数を優先します
+       // 目標問題数（最低125問は確保）
        const targetClf = Math.max(baseClf.length, 125);
        const targetSaa = Math.max(baseSaa.length, 125);
        const targetSap = Math.max(baseSap.length, 125);
@@ -121,49 +119,95 @@
       return result; 
   }
   
-  // ▼▼▼ 修正: SAA/SAP向けに回答を「〇〇を使用し、〇〇と連携させる」形式に加工 ▼▼▼
+  // ▼▼▼ 修正: データが空の場合の安全策を追加 ▼▼▼
   function expandData(base, targetCount, prefix) {
     let result = [];
     let count = 0;
-    if(!base || base.length === 0) return [];
+    
+    // ★ここが修正ポイント: データが空なら「ダミーの種」を作る
+    let sourceData = base;
+    if (!sourceData || sourceData.length === 0) {
+        // コンソールに警告を出す
+        console.warn(`${prefix}のデータが見つかりません。ダミーデータを生成します。`);
+        sourceData = [{
+            q: { ja: "【データ未ロード】data.jsonに問題データが含まれていません。", en: "No data loaded." },
+            a: { ja: "data.jsonを確認し、baseSaaなどにデータを記述してください。", en: "Check data.json." },
+            f: "現在はダミーデータが表示されています。"
+        }];
+    }
 
-    // 組み合わせるサービスのリスト
-    const extraServices = ["Auto Scaling", "CloudFront", "SQS", "Lambda", "DynamoDB", "Route 53", "Kinesis", "Aurora", "EventBridge"];
-    // 文末のパターン（日本語）
-    const suffixesJa = ["と連携させる", "を組み合わせて構成する", "の前に配置する", "を経由して接続する", "をトリガーに実行する", "にデータを保存する"];
-    // 文末のパターン（英語）
-    const suffixesEn = ["integrated with", "configured with", "placed in front of", "connected via", "triggering"];
+    // 自動生成用のシナリオパターン
+    const architecturalPatterns = [
+      {
+        scenario: "予測不能なトラフィックの急増に対応し、かつ手動運用を減らして高可用性を維持する必要があります。",
+        sol_ja: "Application Load Balancer (ALB) を使用し、Auto Scalingグループと連携させる",
+        sol_en: "Use ALB integrated with Auto Scaling Group"
+      },
+      {
+        scenario: "世界中のユーザーに対して静的コンテンツを低遅延で配信し、オリジンサーバーの負荷を軽減する要件があります。",
+        sol_ja: "S3バケットをオリジンとし、CloudFrontディストリビューションと連携させる",
+        sol_en: "Use S3 origin integrated with CloudFront distribution"
+      },
+      {
+        scenario: "サーバーのプロビジョニングや管理を行わずに、イベント駆動型のバックエンドAPIを構築したいと考えています。",
+        sol_ja: "Amazon API Gatewayを作成し、バックエンドのAWS Lambda関数と連携させる",
+        sol_en: "Use API Gateway integrated with Lambda functions"
+      },
+      {
+        scenario: "Web層からの大量のリクエストをバッファリングし、バックエンド処理の結合度を下げる（疎結合にする）必要があります。",
+        sol_ja: "Amazon SQSキューを作成し、メッセージを処理するLambda関数と連携させる",
+        sol_en: "Use Amazon SQS queue integrated with Lambda function"
+      },
+      {
+        scenario: "災害復旧（DR）要件として、1秒未満のRPOで異なるリージョンへの高速なデータベースフェイルオーバーが求められています。",
+        sol_ja: "Amazon Aurora Global Databaseを使用し、セカンダリリージョンへレプリケーションを行う",
+        sol_en: "Use Amazon Aurora Global Database with cross-region replication"
+      },
+      {
+        scenario: "数百のVPCとオンプレミス環境を単一のゲートウェイで効率的に相互接続し、ネットワーク管理を簡素化したいです。",
+        sol_ja: "AWS Transit Gatewayを使用し、すべてのVPCとVPN接続を集約管理する",
+        sol_en: "Use AWS Transit Gateway to interconnect VPCs and on-premise networks"
+      },
+      {
+        scenario: "SQLインジェクションやクロスサイトスクリプティング（XSS）などのWeb攻撃からアプリケーションを保護する必要があります。",
+        sol_ja: "AWS WAFをWeb ACLとして設定し、ALBまたはCloudFrontに関連付ける",
+        sol_en: "Deploy AWS WAF attached to ALB or CloudFront"
+      },
+      {
+        scenario: "データ分析のために、大量のストリーミングデータをリアルタイムで収集し、S3やRedshiftへ配信するパイプラインが必要です。",
+        sol_ja: "Kinesis Data Streamsで収集し、Kinesis Data Firehoseを使用して配信する",
+        sol_en: "Collect via Kinesis Data Streams and deliver using Kinesis Data Firehose"
+      }
+    ];
 
+    // ループ処理（sourceDataを使って増殖させる）
     while (result.length < targetCount) {
-      for (let item of base) {
+      for (let item of sourceData) {
         if (result.length >= targetCount) break;
         let newId = `${prefix}_${count}`;
-        
-        // オブジェクトをコピー
         let newItem = JSON.parse(JSON.stringify(item));
         
-        // SAA または SAP の場合、回答(a)を加工してリアルにする
+        // SAA/SAPの場合のシナリオ化処理
         if (prefix === 'saa' || prefix === 'sap') {
-            const extra = extraServices[count % extraServices.length];
+            const pattern = architecturalPatterns[count % architecturalPatterns.length];
             
-            // 日本語の回答加工
-            if (typeof newItem.a === 'string') {
-                // 単純な文字列の場合（言語切り替え未対応データ）
-                if(newItem.a.length < 25 && currentLang === 'ja') {
-                    const suf = suffixesJa[count % suffixesJa.length];
-                    newItem.a = `${newItem.a}を使用し、${extra}${suf}`;
-                }
-            } else if (newItem.a && typeof newItem.a === 'object') {
-                // 日英対応データの場合
-                const sufJa = suffixesJa[count % suffixesJa.length];
-                const sufEn = suffixesEn[count % suffixesEn.length];
-                
-                if(newItem.a.ja && newItem.a.ja.length < 25) {
-                    newItem.a.ja = `${newItem.a.ja}を使用し、${extra}${sufJa}`;
-                }
-                if(newItem.a.en && newItem.a.en.length < 40) {
-                    newItem.a.en = `Use ${newItem.a.en} ${sufEn} ${extra}`;
-                }
+            // 日本語データのチェック
+            const baseQ = (typeof newItem.q === 'string') ? newItem.q : (newItem.q.ja || "");
+            
+            // 問題文が短い(30文字以下)ならシナリオ化、長ければそのまま使う
+            if (baseQ.length < 30) {
+               const newQ = `【${baseQ}に関する設計】\nある企業が${baseQ}を含むアーキテクチャを検討しています。\n${pattern.scenario}\nコスト効率と運用負荷を考慮した最適な構成はどれですか？`;
+               
+               if(typeof newItem.q === 'string') newItem.q = newQ;
+               else if(newItem.q.ja) newItem.q.ja = newQ;
+               
+               if(typeof newItem.a === 'string') newItem.a = pattern.sol_ja;
+               else if(newItem.a.ja) newItem.a.ja = pattern.sol_ja;
+               
+               if (newItem.q && newItem.q.en) {
+                   newItem.q.en = `[Topic: ${newItem.q.en}]\nA company needs to build a solution.\nRequirement: ${pattern.sol_en.replace('Use ','')} and minimize operational overhead.\nWhich solution meets these requirements?`;
+                   newItem.a.en = pattern.sol_en;
+               }
             }
         }
 
@@ -274,7 +318,9 @@
       pool = allData.filter(d => ids.includes(d.id));
     }
   
-    if(pool.length === 0) { alert("Data loading..."); return; }
+    // ここで空っぽチェックに引っかかると "Data loading..." になっていた
+    // 修正版expandDataのおかげで、今は必ずデータが入るはず
+    if(pool.length === 0) { alert("Data loading... (Check data.json!)"); return; }
     pool = shuffle(pool);
     
     if(mode.includes('quick')) pool = pool.slice(0, 10);
@@ -480,4 +526,10 @@
     const d = localStorage.getItem(SESSION_KEY);
     if(d) { appState = JSON.parse(d); showScreen('quizScreen'); renderQuestion(); }
   }
-  function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+  function shuffle(a) { 
+    for(let i=a.length-1; i>0; i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    } 
+    return a; 
+  }
