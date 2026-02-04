@@ -34,7 +34,7 @@
   let vocabClfData = [], vocabSaaData = [], vocabSapData = [];
   let clfData = [], saaData = [], sapData = [], allData = [];
   
-  // 翻訳データ
+  // 翻訳データ (日/英のみに整理)
   const TRANSLATIONS = {
     ja: {
       quit: "中断", home_title: "学習モード選択", home_subtitle: "基礎から実践まで完全網羅", resume: "再開",
@@ -74,26 +74,34 @@
   });
   
   // JSON読み込み関数
+// JSON読み込み関数
   async function loadExternalData() {
      try {
        const response = await fetch('./data.json');
        if (!response.ok) throw new Error("JSON not found");
        const data = await response.json();
        
-       // Vocabデータの展開
+       // Vocabデータの展開（ここは固定でOK）
        vocabClfData = expandArray(data.vocabClf, 30);
        vocabSaaData = expandArray(data.vocabSaa, 30);
        vocabSapData = expandArray(data.vocabSap, 30);
        
        // シナリオデータの展開
-       const baseClf = expandArray(data.baseClf, 100);
-       const baseSaa = expandArray(data.baseSaa, 100);
-       const baseSap = expandArray(data.baseSap, 100);
+       // ★変更点: JSONの中身が多い場合は、その数をそのまま使うように変更
+       const baseClf = data.baseClf || [];
+       const baseSaa = data.baseSaa || [];
+       const baseSap = data.baseSap || [];
+
+       // 目標問題数（最低でもこれだけは用意する数）
+       // データがこれより多ければ、データの数を優先します
+       const targetClf = Math.max(baseClf.length, 125);
+       const targetSaa = Math.max(baseSaa.length, 125);
+       const targetSap = Math.max(baseSap.length, 125);
        
-       // アプリ用にID付与
-       clfData = expandData(baseClf, 125, 'clf');
-       saaData = expandData(baseSaa, 125, 'saa');
-       sapData = expandData(baseSap, 125, 'sap');
+       // アプリ用にID付与 & シナリオ化
+       clfData = expandData(baseClf, targetClf, 'clf');
+       saaData = expandData(baseSaa, targetSaa, 'saa'); 
+       sapData = expandData(baseSap, targetSap, 'sap'); 
        
        // 全データ結合
        allData = [...vocabClfData, ...vocabSaaData, ...vocabSapData, ...clfData, ...saaData, ...sapData];
@@ -113,20 +121,60 @@
       return result; 
   }
   
+  // ▼▼▼ 修正: SAA/SAP向けに回答を「〇〇を使用し、〇〇と連携させる」形式に加工 ▼▼▼
   function expandData(base, targetCount, prefix) {
     let result = [];
     let count = 0;
     if(!base || base.length === 0) return [];
+
+    // 組み合わせるサービスのリスト
+    const extraServices = ["Auto Scaling", "CloudFront", "SQS", "Lambda", "DynamoDB", "Route 53", "Kinesis", "Aurora", "EventBridge"];
+    // 文末のパターン（日本語）
+    const suffixesJa = ["と連携させる", "を組み合わせて構成する", "の前に配置する", "を経由して接続する", "をトリガーに実行する", "にデータを保存する"];
+    // 文末のパターン（英語）
+    const suffixesEn = ["integrated with", "configured with", "placed in front of", "connected via", "triggering"];
+
     while (result.length < targetCount) {
       for (let item of base) {
         if (result.length >= targetCount) break;
         let newId = `${prefix}_${count}`;
-        result.push({ ...item, id: newId });
+        
+        // オブジェクトをコピー
+        let newItem = JSON.parse(JSON.stringify(item));
+        
+        // SAA または SAP の場合、回答(a)を加工してリアルにする
+        if (prefix === 'saa' || prefix === 'sap') {
+            const extra = extraServices[count % extraServices.length];
+            
+            // 日本語の回答加工
+            if (typeof newItem.a === 'string') {
+                // 単純な文字列の場合（言語切り替え未対応データ）
+                if(newItem.a.length < 25 && currentLang === 'ja') {
+                    const suf = suffixesJa[count % suffixesJa.length];
+                    newItem.a = `${newItem.a}を使用し、${extra}${suf}`;
+                }
+            } else if (newItem.a && typeof newItem.a === 'object') {
+                // 日英対応データの場合
+                const sufJa = suffixesJa[count % suffixesJa.length];
+                const sufEn = suffixesEn[count % suffixesEn.length];
+                
+                if(newItem.a.ja && newItem.a.ja.length < 25) {
+                    newItem.a.ja = `${newItem.a.ja}を使用し、${extra}${sufJa}`;
+                }
+                if(newItem.a.en && newItem.a.en.length < 40) {
+                    newItem.a.en = `Use ${newItem.a.en} ${sufEn} ${extra}`;
+                }
+            }
+        }
+
+        newItem.id = newId;
+        result.push(newItem);
         count++;
       }
     }
     return result;
   }
+  // ▲▲▲ 修正ここまで ▲▲▲
   
   /* ==========================================
      2. UI & Game Logic
